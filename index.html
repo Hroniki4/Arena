@@ -1747,3 +1747,314 @@ games.jackpot={open:open};
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&S.on)poll();});
 })();
 </script>
+  <!-- ===== ЧАСТИНА 7.5: РАКЕТА ===== -->
+<style>
+.rks{position:relative;aspect-ratio:4/3.3;border-radius:20px;overflow:hidden;border:1px solid var(--gold-dim);
+  background:radial-gradient(120% 90% at 50% 115%,#2e2258 0%,#0d0a18 55%,#050505 100%);margin:14px 0}
+.rks .st,.rks .st2{position:absolute;left:0;right:0;top:-180px;bottom:0;animation:rkst 2.6s linear infinite;animation-play-state:paused;
+  background-image:radial-gradient(1.5px 1.5px at 20px 30px,#fff,transparent),radial-gradient(1px 1px at 95px 85px,#f5d77a,transparent),
+  radial-gradient(1.5px 1.5px at 150px 20px,#fff,transparent),radial-gradient(1px 1px at 60px 145px,#cfc3ff,transparent);background-size:180px 180px;opacity:.85}
+.rks .st2{top:-120px;background-size:120px 120px;opacity:.45;animation-name:rkst2}
+.rks.fly .st,.rks.fly .st2{animation-play-state:running}
+@keyframes rkst{to{transform:translateY(180px)}}
+@keyframes rkst2{to{transform:translateY(120px)}}
+.rkm{position:absolute;top:12px;left:0;right:0;text-align:center;font-weight:800;font-size:46px;font-variant-numeric:tabular-nums;
+  letter-spacing:-1px;z-index:3;text-shadow:0 2px 12px rgba(0,0,0,.7)}
+.rkm.x2{color:var(--gold2)}.rkm.x10{color:#c9b8ff}.rkm.dead{color:var(--bad)}.rkm.win{color:var(--ok)}
+.rkr,.rkx{position:absolute;left:43%;bottom:10%;width:14%;aspect-ratio:4/7}
+.rkr{z-index:2;will-change:transform}
+.rkr svg{width:100%;height:100%}
+.rkfl{position:absolute;left:50%;top:96%;width:44%;height:75%;margin-left:-22%;border-radius:50% 50% 50% 50%/18% 18% 82% 82%;
+  background:linear-gradient(#fff3c4,#f5a623 55%,transparent);transform-origin:top;opacity:0}
+.rks.fly .rkfl{opacity:1;animation:rkfl .12s infinite alternate}
+@keyframes rkfl{from{transform:scaleY(.65)}to{transform:scaleY(1.25)}}
+.rkr.gone{opacity:0}
+.rkr.away{transition:transform .7s ease-in,opacity .7s;transform:translate3d(40px,-130%,0) rotate(22deg)!important;opacity:0}
+.rkx{z-index:4;pointer-events:none}
+.rkx i{position:absolute;left:50%;top:50%;width:8px;height:8px;margin:-4px;border-radius:50%;background:var(--c,#f5d77a);opacity:0}
+.rkx b{position:absolute;left:50%;top:50%;width:60px;height:60px;margin:-30px;border-radius:50%;border:3px solid #f5d77a;opacity:0}
+.rks.boom .rkx i{animation:rkp .85s ease-out forwards}
+.rks.boom .rkx b{animation:rkw .7s ease-out forwards}
+.rks.boom .rkx b+b{animation-delay:.12s;border-color:#e5534b}
+@keyframes rkp{0%{opacity:1;transform:rotate(var(--a)) translateX(0)}100%{opacity:0;transform:rotate(var(--a)) translateX(var(--d)) scale(.3)}}
+@keyframes rkw{0%{opacity:.9;transform:scale(.2)}100%{opacity:0;transform:scale(3.6)}}
+.rkf{position:absolute;inset:0;z-index:3;pointer-events:none;opacity:0;background:radial-gradient(circle at 50% 70%,#fff3c4,#f5a623 30%,transparent 65%)}
+.rks.boom .rkf{animation:rkff .5s ease-out}
+@keyframes rkff{0%{opacity:.95}100%{opacity:0}}
+.rks.boom{animation:rkshake .45s}
+@keyframes rkshake{0%,100%{transform:none}20%{transform:translate(-5px,3px)}40%{transform:translate(5px,-3px)}60%{transform:translate(-3px,-2px)}80%{transform:translate(3px,2px)}}
+</style>
+
+<section id="rk" class="screen">
+  <button class="back" onclick="rocket.menu()">
+    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg> Назад
+  </button>
+  <div class="pcard">
+    <h2 style="font-size:26px;margin-bottom:6px">Ракета</h2>
+    <p style="color:var(--muted);font-size:14px;line-height:1.5">Ракета злітає, множник росте. Заберіть виграш до вибуху.</p>
+    <div class="rks" id="rkScene">
+      <div class="st"></div><div class="st2"></div>
+      <div class="rkm" id="rkM">1,00×</div>
+      <div class="rkx" id="rkX"><b></b><b></b></div>
+      <div class="rkr" id="rkR">
+        <svg viewBox="0 0 40 70"><defs><linearGradient id="rkg" x1="0" x2="1"><stop offset="0" stop-color="#f5d77a"/><stop offset="1" stop-color="#b8932b"/></linearGradient></defs>
+          <path d="M11 36 L3 52 L11 48Z M29 36 L37 52 L29 48Z" fill="#6a56a8" stroke="#f5d77a" stroke-width=".7"/>
+          <path d="M20 2 C30 14 31 30 29 48 L11 48 C9 30 10 14 20 2Z" fill="url(#rkg)" stroke="#fff3c4" stroke-width=".8"/>
+          <circle cx="20" cy="26" r="5" fill="#0a0907" stroke="#6a56a8" stroke-width="2"/>
+          <rect x="14" y="48" width="12" height="4" rx="1" fill="#8a6d1a"/></svg>
+        <i class="rkfl"></i>
+      </div>
+      <div class="rkf"></div>
+    </div>
+    <div class="fwres" id="rkRes"></div>
+    <div class="sec">СТАВКА (₴)</div>
+    <input class="field" id="rkIn" type="text" inputmode="numeric" autocomplete="off" maxlength="5" placeholder="Введіть суму" style="margin-bottom:10px">
+    <div class="chips" id="rkQ"></div>
+    <div class="hint" id="rkHint" style="margin-top:0"></div>
+  </div>
+  <button class="btn" id="rkBtn" onclick="rocket.act()">Запуск</button>
+  <p class="hint">Віртуальні монети · лише для розваги. Якщо вийти, ракета летить далі.</p>
+
+  <div class="pcard" style="margin-top:14px">
+    <div class="sec">ПРАВИЛА Й ЙМОВІРНОСТІ</div>
+    <div id="rkRules"></div>
+    <div class="fwrtp" id="rkRtp"></div>
+  </div>
+  <div class="pcard">
+    <div class="sec">ВАШІ ОСТАННІ ПОЛЬОТИ</div>
+    <div id="rkHist"><div class="empty">Завантаження…</div></div>
+  </div>
+</section>
+
+<script>
+(function(){
+const K0=0.1; // має збігатися з rocket_x100 на сервері
+const S={cfg:{min:1000,max:200000,edge:680,maxx:100},id:null,phase:'idle',t0:0,k:K0,raf:0,poll:null,busy:false,
+  ref:null,refStake:0,cashing:false,launching:false,stake:0,w:0,h:0,lx:0,ls:-1,pt:''};
+const rpc=async(fn,args)=>{const{data,error}=await sb.rpc(fn,args);if(error)throw error;return data;};
+const newRef=()=>(window.crypto&&crypto.randomUUID)?crypto.randomUUID():('r'+Date.now().toString(36)+Math.random().toString(36).slice(2,12));
+const xs=(v)=>v.toFixed(2).replace('.',',')+'×';
+const pct=(v)=>v.toFixed(2).replace('.',',')+'%';
+
+function rkErr(e){
+  const m=(e&&e.message)||'';
+  if(/insufficient_funds/.test(m))return 'Недостатньо коштів. Поповніть баланс';
+  if(/bad_stake/.test(m))return 'Ставка від '+(S.cfg.min/100)+' до '+(S.cfg.max/100)+' ₴, цілі гривні';
+  if(/already_flying/.test(m))return 'Ракета вже летить';
+  if(/banned/.test(m))return 'Акаунт заблоковано';
+  if(/bad_config/.test(m))return 'Гра тимчасово недоступна';
+  return errText(e);
+}
+const readStake=()=>{const n=parseInt(($('rkIn').value||'').replace(/\D/g,''),10);return isNaN(n)?0:n*100;};
+const validStake=(u)=>u>=S.cfg.min&&u<=S.cfg.max&&u%100===0;
+
+// ---------- Інтерфейс ----------
+function setM(v,c){
+  const M=$('rkM');
+  M.textContent=xs(v);
+  M.className='rkm'+(c?' '+c:(v>=10?' x10':(v>=2?' x2':'')));
+}
+function btn(){
+  const b=$('rkBtn');
+  const busy=S.phase==='fly'||S.launching||S.phase==='end';
+  $('rkIn').disabled=busy;$('rkQ').classList.toggle('dim',busy);
+  if(S.phase==='fly'){b.disabled=S.cashing;b.textContent='Забрати '+fmt(Math.floor(S.stake*S.lx/100));return;}
+  b.disabled=S.launching||S.phase==='end';
+  const u=readStake();
+  b.textContent=S.launching?'Запуск…':((me&&u>0&&me.balance<u)?'Поповнити баланс':'Запуск');
+}
+function chips(){
+  const v=[10,50,100,500,1000,2000].filter(x=>x*100>=S.cfg.min&&x*100<=S.cfg.max);
+  $('rkQ').innerHTML=v.map(x=>'<button class="chip" onclick="rocket.quick('+x+')">'+x+'</button>').join('');
+  $('rkHint').textContent='Від '+(S.cfg.min/100)+' до '+(S.cfg.max/100)+' ₴, лише цілі гривні';
+}
+function renderRules(){
+  const e=S.cfg.edge/10000,mx=S.cfg.maxx;
+  const L=[1.5,2,5,10,50,mx].filter((v,i,a)=>v<=mx&&a.indexOf(v)===i);
+  $('rkRules').innerHTML='<div class="fwrow"><div><b>Миттєвий вибух (1,00×)</b></div><span>'+pct(e*100)+'</span></div>'
+    +L.map(x=>'<div class="fwrow"><div><b>Дійти до '+xs(x)+'</b></div><span>'+pct((1-e)/x*100)+'</span></div>').join('');
+  $('rkRtp').innerHTML='Виплата = ставка × множник у момент, коли ви натиснули «Забрати».<br>'
+    +'Точку вибуху сервер визначає до зльоту й приховує, множник рахується за часом на сервері.<br>'
+    +'Повернення гравцям за будь-якої стратегії: <b>'+pct((1-e)*100)+'</b> · перевага платформи: <b>'+pct(e*100)+'</b><br>'
+    +'Максимальний множник: <b>'+xs(mx)+'</b>. Це соло-режим: у кожного гравця своя ракета.';
+}
+function resetScene(){
+  const sc=$('rkScene');sc.classList.remove('boom','fly');
+  const r=$('rkR');r.classList.remove('gone','away');r.style.transform='';
+  $('rkX').style.transform='';$('rkRes').innerHTML='';S.lx=0;S.ls=-1;S.pt='';setM(1);
+}
+function speed(m){
+  const q=Math.floor(m*2);if(q===S.ls)return;S.ls=q;
+  const d=Math.max(.3,2.4/Math.sqrt(m));
+  const a=document.querySelector('#rkScene .st'),b=document.querySelector('#rkScene .st2');
+  a.style.animationDuration=d+'s';b.style.animationDuration=(d*1.8)+'s';
+}
+
+// ---------- Політ ----------
+function frame(){
+  if(S.phase!=='fly')return;
+  const t=(Date.now()-S.t0)/1000,x100=Math.floor(100*Math.exp(S.k*t)),m=x100/100;
+  if(x100!==S.lx){S.lx=x100;setM(m);btn();speed(m);}
+  const p=1-Math.exp(-(m-1)/2.5),sh=m>3?Math.sin(t*45)*Math.min(2.5,(m-3)*.35):0;
+  S.pt='translate3d('+(p*S.w*.10+sh).toFixed(1)+'px,'+(-p*S.h*.52).toFixed(1)+'px,0)';
+  $('rkR').style.transform=S.pt+' rotate('+(6+p*10).toFixed(1)+'deg)';
+  S.raf=requestAnimationFrame(frame);
+}
+function startFly(el,withPoll){
+  const sc=$('rkScene');S.w=sc.clientWidth;S.h=sc.clientHeight;
+  S.phase='fly';S.t0=Date.now()-el;S.lx=0;S.ls=-1;S.cashing=false;
+  sc.classList.add('fly');
+  cancelAnimationFrame(S.raf);S.raf=requestAnimationFrame(frame);
+  clearInterval(S.poll);S.poll=withPoll?setInterval(poll,800):null;
+  btn();
+}
+function stopFly(){
+  cancelAnimationFrame(S.raf);S.raf=0;clearInterval(S.poll);S.poll=null;
+  $('rkScene').classList.remove('fly');
+}
+function after(){
+  setTimeout(()=>{if(S.phase==='end'){S.phase='idle';btn();}},900);
+  refreshBalance().then(btn);loadHist();
+}
+function boom(r){
+  stopFly();S.phase='end';
+  const c=(r.crash_x100||100)/100;
+  $('rkX').style.transform=S.pt||'';
+  const sc=$('rkScene');sc.classList.remove('boom');void sc.offsetWidth;sc.classList.add('boom');
+  $('rkR').classList.add('gone');setM(c,'dead');
+  $('rkRes').style.color='var(--bad)';
+  $('rkRes').innerHTML='Вибух на '+xs(c)+'<small>Ставка '+fmt(r.stake)+' програна</small>';
+  if(navigator.vibrate)try{navigator.vibrate([60,40,120]);}catch(e){}
+  after();
+}
+function win(r){
+  stopFly();S.phase='end';
+  setM(r.cash_x100/100,'win');
+  $('rkR').classList.add('away');
+  $('rkRes').style.color='var(--gold2)';
+  $('rkRes').innerHTML='Виграш +'+fmt(r.payout)+'<small>'+xs(r.cash_x100/100)+' · ставка '+fmt(r.stake)
+    +(r.crash_x100?' · вибух був би на '+xs(r.crash_x100/100):'')+'</small>';
+  after();
+}
+const finish=(r)=>{if(r.status==='cashed')win(r);else boom(r);};
+
+async function poll(){
+  if(S.phase!=='fly'||S.busy||document.hidden)return;
+  S.busy=true;
+  try{const r=await rpc('rocket_state',{p_id:S.id});if(S.phase==='fly'&&r.status!=='flying')finish(r);}catch(e){}
+  S.busy=false;
+}
+
+// ---------- Дії ----------
+async function launch(){
+  if(S.phase!=='idle'||S.launching)return;
+  const u=readStake();
+  if(!validStake(u)){toast(rkErr({message:'bad_stake'}));return;}
+  if(!me||me.balance<u){openTopup();return;}
+  S.launching=true;S.stake=u;btn();
+  if(!S.ref||S.refStake!==u){S.ref=newRef();S.refStake=u;}
+  let r;
+  try{r=await rpc('rocket_launch',{p_stake:u,p_ref:S.ref});S.ref=null;}
+  catch(e){
+    const m=(e&&e.message)||'';
+    if(/insufficient_funds|bad_stake|banned|bad_ref|forbidden|bad_config|already_flying/.test(m))S.ref=null;
+    toast(rkErr(e));S.launching=false;btn();refreshBalance();
+    if(/already_flying/.test(m))resume();
+    return;
+  }
+  S.launching=false;S.stake=r.stake;S.id=r.id;
+  refreshBalance();
+  resetScene();
+  if(r.status==='flying')startFly(r.el_ms||0,true);
+  else{startFly(0,false);setTimeout(()=>{if(S.phase==='fly')finish(r);},700);}
+}
+async function cash(){
+  if(S.phase!=='fly'||S.cashing)return;
+  S.cashing=true;btn();
+  try{const r=await rpc('rocket_cashout',{p_id:S.id});if(S.phase==='fly')finish(r);}
+  catch(e){toast(rkErr(e));}
+  S.cashing=false;btn();
+}
+async function resume(){
+  try{
+    const r=await rpc('rocket_my_round');
+    if(r&&r.status==='flying'){
+      S.id=r.id;S.stake=r.stake;$('rkIn').value=String(r.stake/100);
+      resetScene();startFly(r.el_ms||0,true);
+    }
+  }catch(e){}
+}
+
+// ---------- Дані ----------
+async function loadHist(){
+  const box=$('rkHist');
+  try{
+    const h=await rpc('rocket_history');
+    if(!h||!h.length){box.innerHTML='<div class="empty">Польотів поки немає</div>';return;}
+    box.innerHTML=h.map(t=>{
+      const net=t.payout-t.stake,pos=net>=0&&t.status==='cashed';
+      return '<div class="tx"><div><b>'+(t.status==='cashed'?xs(t.cash_x100/100):'💥 '+xs(t.crash_x100/100))+'</b>'
+        +'<small>'+new Date(t.ended_at).toLocaleString('uk-UA')+' · ставка '+fmt(t.stake)+'</small></div>'
+        +'<span class="'+(pos?'p':'m')+'">'+(pos?'+':'−')+fmt(Math.abs(net))+'</span></div>';
+    }).join('');
+  }catch(e){box.innerHTML='<div class="empty">Не вдалося завантажити</div>';}
+}
+async function loadCfg(){
+  try{
+    const{data}=await sb.from('config').select('value').eq('key','rocket').maybeSingle();
+    const v=data&&data.value;
+    if(v){
+      if(v.min)S.cfg.min=Number(v.min);if(v.max)S.cfg.max=Number(v.max);
+      if(v.edge_bp!==undefined)S.cfg.edge=Number(v.edge_bp);if(v.max_x)S.cfg.maxx=Number(v.max_x);
+    }
+  }catch(e){}
+}
+async function open(){
+  if(!me){showScreen('auth');return;}
+  showScreen('rk');
+  stopFly();S.phase='idle';S.launching=false;resetScene();
+  await loadCfg();renderRules();chips();
+  const inp=$('rkIn');if(!inp.value)inp.value='10';
+  btn();
+  await refreshBalance();btn();loadHist();
+  resume();
+}
+function menu(){stopFly();S.phase='idle';S.launching=false;showScreen('home');refreshBalance();}
+
+// ---------- Ініціалізація ----------
+(function init(){
+  const X=$('rkX'),cols=['#f5d77a','#f5a623','#e5534b','#c9b8ff','#fff3c4'];
+  let h='';
+  for(let i=0;i<14;i++)h+='<i style="--a:'+Math.round(i*360/14+(i%2?8:-8))+'deg;--d:'+(60+(i*37)%50)+'px;--c:'+cols[i%5]+'"></i>';
+  X.insertAdjacentHTML('beforeend',h);
+  $('rkIn').addEventListener('input',function(){this.value=this.value.replace(/\D/g,'');btn();});
+  $('rkIn').addEventListener('blur',function(){
+    const u=readStake();if(!u)return;
+    this.value=String(Math.min(Math.max(u,S.cfg.min),S.cfg.max)/100);btn();
+  });
+  const g=document.querySelector('#home .grid');
+  if(g&&!$('rkCard')){
+    g.insertAdjacentHTML('beforeend',`<button class="gcard" id="rkCard" onclick="openGame('rocket')" style="grid-column:1/-1;aspect-ratio:2.2">
+      <div class="gart"><svg viewBox="0 0 300 120" preserveAspectRatio="xMidYMid slice">
+        <defs><linearGradient id="rkcg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#1b1433"/><stop offset="1" stop-color="#060504"/></linearGradient></defs>
+        <rect width="300" height="120" fill="url(#rkcg)"/>
+        <path d="M10 112 Q120 104 180 66 T268 14" stroke="rgba(212,175,55,.5)" stroke-width="2" fill="none" stroke-dasharray="4 5"/>
+        <g transform="translate(262 18) rotate(40)"><path d="M0 -16 C8 -6 8 6 6 14 L-6 14 C-8 6 -8 -6 0 -16Z" fill="#f5d77a" stroke="#fff3c4" stroke-width=".8"/><circle cx="0" cy="-2" r="3.2" fill="#0a0907" stroke="#6a56a8" stroke-width="1.4"/><path d="M-3 14 L0 28 L3 14Z" fill="#f5a623"/></g>
+        <g fill="#fff" opacity=".7"><circle cx="40" cy="26" r="1.2"/><circle cx="96" cy="14" r="1"/><circle cx="170" cy="30" r="1.3"/><circle cx="220" cy="70" r="1"/><circle cx="60" cy="70" r="1"/></g>
+        <text x="22" y="62" fill="#f5d77a" font-size="30" font-weight="800">×2,47</text>
+      </svg></div>
+      <div class="ginfo"><div><h3>Ракета</h3><p>Забери до вибуху</p></div>
+        <span class="arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span></div>
+    </button>`);
+  }
+})();
+
+window.rocket={
+  open:open,menu:menu,
+  act:()=>{if(S.phase==='fly')cash();else launch();},
+  quick:(v)=>{if(S.phase!=='idle')return;$('rkIn').value=String(v);btn();}
+};
+games.rocket={open:open};
+document.addEventListener('visibilitychange',()=>{if(!document.hidden&&S.phase==='fly')poll();});
+})();
+</script>
