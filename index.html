@@ -2058,3 +2058,317 @@ games.rocket={open:open};
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&S.phase==='fly')poll();});
 })();
 </script>
+  <!-- ===== ЧАСТИНА 8: СЕКА ===== -->
+<style>
+.skrooms{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.skroom{padding:12px 4px;border-radius:16px;border:1px solid var(--gold-dim);background:var(--card);text-align:center}
+.skroom:active{transform:scale(.97)}
+.skroom b{display:block;font-size:20px;color:var(--gold)}
+.skroom small{color:var(--muted);font-size:12px}
+.skhead{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}
+.skinfo{text-align:right;color:var(--muted);font-size:12.5px;line-height:1.4}
+.skinfo b{color:var(--text)}
+.skpot{text-align:center;margin:6px 0 10px}
+.skpot b{display:block;font-size:30px;color:var(--gold2);font-variant-numeric:tabular-nums}
+.skpot small{color:var(--muted);font-size:12.5px}
+.skpl{display:grid;grid-template-columns:repeat(auto-fill,minmax(104px,1fr));gap:8px;margin:12px 0}
+.skp{padding:8px 10px;border-radius:14px;border:1px solid rgba(212,175,55,.2);background:var(--card);min-width:0}
+.skp.act{border-color:var(--gold);box-shadow:0 0 0 1px rgba(212,175,55,.3)}
+.skp.fd{opacity:.45}
+.skp b{display:block;font-size:13.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.skp small{color:var(--muted);font-size:11.5px}
+.skp .mini{display:flex;gap:3px;margin-top:5px}
+.skp .mini i{width:14px;height:20px;border-radius:3px;background:linear-gradient(135deg,#2a1f4d,#120d24);border:1px solid var(--gold-dim)}
+.skhand{display:flex;justify-content:center;gap:10px;margin:14px 0 6px;min-height:100px}
+.skc{position:relative;display:block;width:min(24vw,88px);aspect-ratio:5/7;border-radius:10px;
+  background:linear-gradient(160deg,#fbf6e6,#e8ddc0);border:1px solid #b8932b;box-shadow:0 5px 12px rgba(0,0,0,.55);color:#111;font-style:normal}
+.skc.rd{color:#c4271c}
+.skc b{position:absolute;left:7px;top:4px;font-size:clamp(16px,5.4vw,24px);font-weight:800;line-height:1}
+.skc u{position:absolute;left:7px;top:calc(clamp(16px,5.4vw,24px) + 4px);text-decoration:none;font-size:clamp(13px,4.2vw,19px);line-height:1}
+.skc em{position:absolute;inset:0;display:grid;place-items:center;font-style:normal;font-size:clamp(30px,10vw,46px);opacity:.9;padding-top:14%}
+.skc.sm{width:44px;border-radius:6px;box-shadow:0 2px 5px rgba(0,0,0,.5)}
+.skc.sm b{font-size:13px;left:4px;top:2px}
+.skc.sm u{font-size:11px;left:4px;top:15px}
+.skc.sm em{font-size:20px}
+.skc.deal{animation:skdeal .45s ease both;animation-delay:calc(var(--i) * .12s)}
+@keyframes skdeal{from{opacity:0;transform:translateY(-40px) rotate(-8deg)}to{opacity:1;transform:none}}
+.skscore{text-align:center;color:var(--muted);font-size:14px;min-height:22px;margin-bottom:10px}
+.skscore b{color:var(--gold2);font-size:18px}
+.skrow{display:flex;gap:10px;margin-bottom:10px}
+.skrow .btn{height:50px;font-size:15px}
+.skrs{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.skrs button{padding:8px 4px;border-radius:14px;border:1px solid var(--gold-dim);background:var(--card);font-weight:700;line-height:1.25}
+.skrs button small{display:block;color:var(--muted);font-weight:500;font-size:11.5px}
+.skrs button:disabled{opacity:.35}
+.skrp{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(212,175,55,.12);font-size:13.5px}
+.skrp:last-child{border:0}
+.skrp .n{flex:1;min-width:0}
+.skrp .n b{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.skrp .n small{color:var(--muted)}
+.skrp .cs{display:flex;gap:4px}
+.skrp.w .n b{color:var(--gold2)}
+</style>
+
+<section id="sk" class="screen">
+  <div id="skLobby">
+    <button class="back" onclick="seka.menu()">
+      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg> Назад
+    </button>
+    <div class="pcard">
+      <h2 style="font-size:26px;margin-bottom:6px">Сека</h2>
+      <p style="color:var(--muted);font-size:14px;line-height:1.5">Карткова гра на 2–10 гравців. Оберіть анте й розмір столу.</p>
+    </div>
+    <div id="skRooms"><div class="empty">Завантаження…</div></div>
+    <div class="pcard">
+      <div class="sec">ПРАВИЛА</div>
+      <div class="bsinfo">
+        36 карт (6–Туз), кожному по 3 карти.<br>
+        Очки: туз 11, К/Д/В/10 по 10, інші за номіналом. Рахується сума карт <b>однієї масті</b> (береться найбільша).<br>
+        Два тузи = <b>22</b>, три однакові карти = <b>32</b>.<br>
+        Торги по колу: пас, зрівняти (чек) або підвищити. Потім вскриття: перемагає найбільше очок, при рівності банк ділиться.<br>
+        Банк мінус комісія <b><span id="skBp">7</span>%</b> іде переможцю. 30 с без ходу = автоматичний пас.<br>
+        Стіл стартує, коли сіли мінімум 2 гравці. Хто підсів посеред роздачі, грає з наступної.
+      </div>
+    </div>
+    <p class="hint">Віртуальні монети · лише для розваги</p>
+  </div>
+
+  <div id="skTable" style="display:none">
+    <div class="skhead">
+      <button class="chip" onclick="seka.leave()" style="min-height:40px;padding:0 14px">← Вийти</button>
+      <div class="skinfo" id="skInfo"></div>
+    </div>
+    <div class="skpot"><small>Банк</small><b id="skPot">0,00</b><small id="skBet"></small></div>
+    <div class="turnbar" id="skStatus">…</div>
+    <div class="tbar"><i id="skBar"></i></div>
+    <div class="skpl" id="skPl"></div>
+    <div id="skRes"></div>
+    <div class="skhand" id="skHand"></div>
+    <div class="skscore" id="skScore"></div>
+    <div id="skAct"></div>
+  </div>
+</section>
+
+<script>
+(function(){
+const RK=['6','7','8','9','10','В','Д','К','Т'],ST=['♠','♥','♦','♣'];
+const S={id:null,s:null,key:'',poll:null,tick:null,lob:null,busy:false,again:false,sending:false,
+  deadline:0,zero:false,resHand:-1,lastHand:-1,bp:700};
+const rpc=async(fn,args)=>{const{data,error}=await sb.rpc(fn,args);if(error)throw error;return data;};
+const view=(n)=>{$('skLobby').style.display=n==='L'?'block':'none';$('skTable').style.display=n==='T'?'block':'none';};
+const sortH=(h)=>h.slice().sort((a,b)=>((a/9|0)-(b/9|0))||((b%9)-(a%9)));
+const cardH=(c,sm,i)=>{
+  const s=(c/9)|0,r=c%9;
+  return '<i class="skc'+(sm?' sm':'')+((s===1||s===2)?' rd':'')+(i!==undefined?' deal':'')+'"'
+    +(i!==undefined?' style="--i:'+i+'"':'')+'><b>'+RK[r]+'</b><u>'+ST[s]+'</u><em>'+ST[s]+'</em></i>';
+};
+
+function skErr(e){
+  const m=(e&&e.message)||'';
+  if(/insufficient_funds/.test(m))return 'Недостатньо коштів. Поповніть баланс';
+  if(/not_your_turn/.test(m))return 'Зараз не ваш хід';
+  if(/not_active/.test(m))return 'Стан гри змінився';
+  if(/cant_raise/.test(m))return 'Підвищення неможливе: у когось замало коштів';
+  if(/raise_cap/.test(m))return 'Досягнуто ліміт підвищень';
+  if(/table_full/.test(m))return 'Стіл заповнився, спробуйте ще раз';
+  if(/banned/.test(m))return 'Акаунт заблоковано';
+  if(/forbidden/.test(m))return 'Вас немає за цим столом';
+  return errText(e);
+}
+
+// ---------- Лобі ----------
+function renderRooms(rooms){
+  const by={};
+  (rooms||[]).forEach(r=>{(by[r.stake]=by[r.stake]||[]).push(r);});
+  const h=Object.keys(by).map(k=>'<div class="pcard"><div class="sec">АНТЕ '+fmt(+k)+'</div><div class="skrooms">'
+    +by[k].map(r=>'<button class="skroom" onclick="seka.sit('+r.stake+','+r.size+')"><b>2/'+r.size+'</b><small>гравців: '+r.players+'</small></button>').join('')
+    +'</div></div>').join('');
+  $('skRooms').innerHTML=h||'<div class="empty">Столів поки немає</div>';
+}
+async function loadLobby(){
+  try{
+    const d=await rpc('seka_lobby');
+    if(d.mine&&!S.id){enter(d.mine);return;}
+    renderRooms(d.rooms);
+  }catch(e){}
+}
+function stopLobby(){clearInterval(S.lob);S.lob=null;}
+function stopTable(){clearInterval(S.poll);clearInterval(S.tick);S.poll=S.tick=null;}
+function lobby(){
+  stopTable();stopLobby();view('L');
+  loadLobby();
+  S.lob=setInterval(()=>{if(!document.hidden&&!S.id)loadLobby();},3000);
+}
+
+// ---------- Стіл ----------
+function updInfo(){
+  const s=S.s;if(!s)return;
+  $('skInfo').innerHTML='Анте <b>'+fmt(s.stake)+'</b> · 2/'+s.max_players+'<br>Баланс <b>'+fmt(me?me.balance:0)+'</b>';
+}
+function stat(s,left){
+  const mine=s.status==='betting'&&s.turn_seat===s.my_seat&&s.my_state==='active';
+  let t,c=false;
+  if(s.status==='betting'){
+    if(s.my_state==='out')t='Роздача триває · ви зіграєте в наступній';
+    else if(s.my_state==='folded')t='Ви спасували';
+    else if(mine){t='Ваш хід · '+left+' с';c=true;}
+    else{const p=s.players.find(x=>x.seat===s.turn_seat);t='Ходить '+(p?p.name:'…')+' · '+left+' с';}
+  }else if(s.status==='countdown')t='Роздача через '+left+' с';
+  else if(s.status==='result')t='Наступна роздача скоро';
+  else t=s.players.length<2?'Чекаємо гравців (потрібно мінімум 2)':'Очікуємо гравців…';
+  return {t:t,c:c};
+}
+function resHtml(s){
+  const r=s.last_result,mp=r.players.find(p=>p.user===s.me),won=r.winners.indexOf(s.me)>=0;
+  let head;
+  if(mp&&won)head='<h3 style="color:var(--gold2);margin-bottom:4px">Ви виграли +'+fmt(r.each)+'</h3>';
+  else if(mp)head='<h3 style="color:var(--bad);margin-bottom:4px">Ви програли '+fmt(mp.put)+'</h3>';
+  else head='<h3 style="margin-bottom:4px">Роздача #'+r.hand_no+'</h3>';
+  const sub='Банк '+fmt(r.pot)+' · комісія '+fmt(r.fee)+(r.by_fold?' · інші спасували':'')+(r.winners.length>1?' · банк поділено':'');
+  const rows=r.players.map(p=>{
+    const w=r.winners.indexOf(p.user)>=0;
+    return '<div class="skrp'+(w?' w':'')+'"><div class="n"><b>'+(w?'★ ':'')+esc(p.name)+'</b><small>'
+      +(p.state==='folded'?'Пас':(p.score!=null?'Очки: '+p.score:'У грі'))+' · вніс '+fmt(p.put)+'</small></div>'
+      +(p.cards?'<div class="cs">'+sortH(p.cards).map(c=>cardH(c,true)).join('')+'</div>':'')+'</div>';
+  }).join('');
+  return '<div class="pcard" style="margin:10px 0"><div class="sec">РЕЗУЛЬТАТ</div>'+head
+    +'<p style="color:var(--muted);font-size:13px;margin-bottom:8px">'+sub+'</p>'+rows+'</div>';
+}
+function render(s){
+  updInfo();
+  const live=s.status==='betting'||s.status==='result';
+  $('skPot').textContent=fmt(s.pot);
+  $('skBet').textContent=s.status==='betting'?'Ставка за столом '+fmt(s.bet)+' · підвищень '+s.raises+'/6':'';
+  const turn=s.status==='betting'?s.turn_seat:-1;
+  const others=s.players.filter(p=>p.user!==s.me);
+  $('skPl').innerHTML=others.length?others.map(p=>{
+    const st=live?p.state:'out';
+    const lb=st==='folded'?'Пас':(st==='active'?'У грі':'Чекає');
+    return '<div class="skp'+(p.seat===turn?' act':'')+(st==='folded'?' fd':'')+'"><b>'+esc(p.name)+'</b><small>'+lb
+      +(live&&p.put>0?' · '+fmt(p.put):'')+'</small>'
+      +(st==='active'?'<div class="mini"><i></i><i></i><i></i></div>':'')+'</div>';
+  }).join(''):'<div class="empty" style="grid-column:1/-1">За столом поки лише ви</div>';
+  $('skRes').innerHTML=(s.status==='result'&&s.last_result)?resHtml(s):'';
+  const hh=$('skHand');
+  if(live&&s.my_hand&&s.my_state!=='out'){
+    const anim=s.hand_no!==S.lastHand;S.lastHand=s.hand_no;
+    hh.style.opacity=s.my_state==='folded'?'.45':'1';
+    hh.innerHTML=sortH(s.my_hand).map((c,i)=>cardH(c,false,anim?i:undefined)).join('');
+    $('skScore').innerHTML='Ваші очки: <b>'+s.my_score+'</b>';
+  }else{hh.innerHTML='';$('skScore').textContent='';}
+  const mine=s.status==='betting'&&s.turn_seat===s.my_seat&&s.my_state==='active';
+  if(mine){
+    const m2=s.players.find(p=>p.seat===s.my_seat),put=m2?m2.put:0,need=s.bet-put,cap=s.cap||0;
+    let h=`<div class="skrow"><button class="btn ghost" onclick="seka.act('fold')">Пас</button>`
+      +`<button class="btn" onclick="seka.act('call')">${need>0?'Зрівняти '+fmt(need):'Чек'}</button></div><div class="skrs">`;
+    [1,2,5].forEach(m=>{
+      const nb=s.bet+m*s.stake,dis=s.raises>=6||nb>cap;
+      h+=`<button ${dis?'disabled ':''}onclick="seka.act('raise',${m})">+${m}×<small>до ${fmt(nb)}</small></button>`;
+    });
+    $('skAct').innerHTML=h+'</div>';
+  }else $('skAct').innerHTML='';
+}
+function clock(){
+  const s=S.s;if(!s)return;
+  const left=Math.max(0,Math.ceil((S.deadline-Date.now())/1000));
+  const st=stat(s,left),el=$('skStatus');
+  if(el.textContent!==st.t)el.textContent=st.t;
+  el.className='turnbar'+(st.c?' mine':'');
+  $('skBar').style.width=(s.status==='betting'?Math.min(100,left/(s.turn_secs||30)*100):0)+'%';
+  if(left===0&&!S.zero&&(s.status==='betting'||s.status==='countdown'||s.status==='result')){S.zero=true;setTimeout(poll,500);}
+}
+function apply(s){
+  S.s=s;S.deadline=Date.now()+s.left*1000;S.zero=false;
+  const rest=Object.assign({},s);delete rest.left;
+  const key=JSON.stringify(rest);
+  if(key!==S.key){S.key=key;render(s);}
+  clock();
+  if(s.status==='result'&&s.hand_no!==S.resHand){S.resHand=s.hand_no;refreshBalance().then(updInfo);}
+}
+async function poll(){
+  if(!S.id)return;
+  if(S.busy){S.again=true;return;}
+  S.busy=true;
+  try{const s=await rpc('seka_state',{p_tid:S.id});if(S.id)apply(s);}
+  catch(e){if(/forbidden/.test((e&&e.message)||''))exitTable('Вас виключено зі столу');}
+  S.busy=false;
+  if(S.again){S.again=false;poll();}
+}
+function enter(id){
+  stopLobby();stopTable();
+  S.id=id;S.s=null;S.key='';S.resHand=-1;S.lastHand=-1;S.sending=false;
+  $('skRes').innerHTML='';$('skHand').innerHTML='';$('skAct').innerHTML='';$('skPl').innerHTML='';
+  view('T');
+  S.poll=setInterval(()=>{if(!document.hidden)poll();},1500);
+  S.tick=setInterval(clock,250);
+  poll();
+}
+function exitTable(msg){
+  stopTable();S.id=null;S.s=null;S.key='';
+  if(msg)toast(msg);
+  refreshBalance();lobby();
+}
+
+// ---------- Дії ----------
+async function act(a,m){
+  if(S.sending||!S.id)return;
+  S.sending=true;
+  try{
+    const s=await rpc('seka_act',{p_tid:S.id,p_action:a,p_mult:m||1});
+    apply(s);refreshBalance().then(updInfo);
+  }catch(e){toast(skErr(e));await poll();}
+  S.sending=false;
+}
+async function leave(){
+  const s=S.s;
+  if(s&&s.status==='betting'&&s.my_state==='active'&&!confirm('Вийти зі столу? Ваша ставка в цій роздачі буде втрачена.'))return;
+  try{await rpc('seka_leave',{p_tid:S.id});}catch(e){toast(skErr(e));return;}
+  exitTable('');
+}
+async function sit(stake,size){
+  if(!me||me.balance<stake){openTopup();return;}
+  try{const id=await rpc('seka_sit',{p_stake:stake,p_size:size});enter(id);}
+  catch(e){toast(skErr(e));}
+}
+async function open(){
+  if(!me){showScreen('auth');return;}
+  showScreen('sk');
+  try{
+    const{data}=await sb.from('config').select('value').eq('key','commission_bp').maybeSingle();
+    if(data&&data.value&&data.value.seka)S.bp=Number(data.value.seka);
+  }catch(e){}
+  $('skBp').textContent=S.bp/100;
+  await refreshBalance();
+  try{const id=await rpc('seka_my_table');if(id){enter(id);return;}}catch(e){}
+  lobby();
+}
+function menu(){stopLobby();stopTable();S.id=null;showScreen('home');refreshBalance();}
+
+window.seka={open:open,menu:menu,sit:sit,leave:leave,act:act};
+games.seka=window.seka;
+document.addEventListener('visibilitychange',()=>{
+  if(document.hidden)return;
+  if(S.id)poll();
+  else if($('sk').classList.contains('active'))loadLobby();
+});
+
+// Картка на головному екрані
+(function(){
+  const g=document.querySelector('#home .grid');
+  if(!g||$('skCard'))return;
+  g.insertAdjacentHTML('beforeend',`<button class="gcard" id="skCard" onclick="openGame('seka')" style="grid-column:1/-1;aspect-ratio:2.2">
+    <div class="gart"><svg viewBox="0 0 300 120" preserveAspectRatio="xMidYMid slice">
+      <rect width="300" height="120" fill="#0a0907"/>
+      <ellipse cx="150" cy="118" rx="140" ry="20" fill="rgba(212,175,55,.08)"/>
+      <g transform="translate(150 64)">
+        <g transform="rotate(-18) translate(-52 0)"><rect x="-26" y="-38" width="52" height="76" rx="6" fill="#f6f0e0" stroke="#b8932b"/><text x="-19" y="-18" font-size="16" font-weight="800" fill="#111">К</text><text x="-12" y="14" font-size="30" fill="#111">♠</text></g>
+        <g transform="rotate(18) translate(52 0)"><rect x="-26" y="-38" width="52" height="76" rx="6" fill="#f6f0e0" stroke="#b8932b"/><text x="-19" y="-18" font-size="16" font-weight="800" fill="#c4271c">10</text><text x="-12" y="14" font-size="30" fill="#c4271c">♦</text></g>
+        <g><rect x="-26" y="-44" width="52" height="76" rx="6" fill="#f6f0e0" stroke="#d4af37" stroke-width="1.5"/><text x="-19" y="-24" font-size="16" font-weight="800" fill="#c4271c">Т</text><text x="-12" y="8" font-size="30" fill="#c4271c">♥</text></g>
+      </g>
+    </svg></div>
+    <div class="ginfo"><div><h3>Сека</h3><p>Карти · столи на 2–10 гравців</p></div>
+      <span class="arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span></div>
+  </button>`);
+})();
+})();
+</script>
