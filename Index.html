@@ -1,0 +1,1749 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="theme-color" content="#050505">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>ArenaTS</title>
+
+<!-- ===== ЧАСТИНА 2: ДИЗАЙН-СИСТЕМА ===== -->
+<style>
+:root{
+  --bg:#050505; --card:#111010; --card2:#171512;
+  --gold:#d4af37; --gold2:#f5d77a; --gold-dim:rgba(212,175,55,.35);
+  --violet:#6a56a8; --text:#f3efe6; --muted:#8d8777;
+  --ok:#2ecc71; --bad:#e5534b;
+  --r:22px; --sat:env(safe-area-inset-top); --sab:env(safe-area-inset-bottom);
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{background:var(--bg);color:var(--text);font-family:-apple-system,"SF Pro Display","Segoe UI",Roboto,sans-serif;
+  overflow-x:hidden;min-height:100%;-webkit-font-smoothing:antialiased}
+body{background:radial-gradient(120% 60% at 100% 0%,rgba(212,175,55,.10),transparent 60%),var(--bg)}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+svg{display:block}
+.screen{display:none;min-height:100vh;padding:calc(var(--sat) + 14px) 16px calc(var(--sab) + 24px);
+  max-width:520px;margin:0 auto}
+.screen.active{display:block;animation:fadeIn .25s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+/* Шапка */
+.top{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:22px}
+.logo{display:flex;flex-direction:column;align-items:flex-start;line-height:1}
+.logo svg{width:44px;height:26px;margin-left:6px}
+.logo b{font-size:30px;font-weight:800;letter-spacing:-.5px}
+.logo b i{font-style:normal;color:var(--gold)}
+.top-right{display:flex;align-items:center;gap:10px}
+.bal{display:flex;align-items:center;gap:8px;height:48px;padding:0 6px 0 12px;border-radius:30px;
+  border:1px solid var(--gold-dim);background:linear-gradient(180deg,#14110a,#0a0907)}
+.bal svg.coin{width:22px;height:22px}
+.bal span{font-weight:700;font-size:16px;font-variant-numeric:tabular-nums;white-space:nowrap}
+.plus{width:36px;height:36px;border-radius:50%;border:1px solid var(--gold);display:grid;place-items:center;color:var(--gold);font-size:24px;line-height:1}
+.avatar{position:relative;width:48px;height:48px;border-radius:50%;border:1px solid var(--gold-dim);
+  display:grid;place-items:center;background:linear-gradient(180deg,#14110a,#0a0907)}
+.avatar svg{width:24px;height:24px}
+.dot{position:absolute;right:0;bottom:2px;width:11px;height:11px;border-radius:50%;background:var(--ok);border:2px solid #050505}
+
+/* Картки */
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.gcard{position:relative;border-radius:var(--r);overflow:hidden;border:1px solid var(--gold-dim);
+  background:linear-gradient(180deg,var(--card2),var(--card));aspect-ratio:.9;display:flex;flex-direction:column;
+  text-align:left;transition:transform .15s}
+.gcard:active{transform:scale(.97)}
+.gart{flex:1;min-height:0}
+.gart svg{width:100%;height:100%}
+.ginfo{display:flex;align-items:center;justify-content:space-between;padding:6px 12px 14px 14px}
+.ginfo h3{font-size:17px;font-weight:700;margin-bottom:3px}
+.ginfo p{font-size:12.5px;color:var(--muted)}
+.arrow{flex:none;width:38px;height:38px;border-radius:50%;border:1px solid var(--gold);display:grid;place-items:center;color:var(--gold)}
+.arrow svg{width:18px;height:18px}
+.soon{margin-top:14px;position:relative;border-radius:var(--r);border:1px solid var(--gold-dim);overflow:hidden;
+  background:linear-gradient(120deg,#13110c,#0a0907);padding:20px 18px;display:flex;align-items:center;justify-content:space-between;width:100%}
+.soon h3{font-size:20px;margin-bottom:4px}
+.soon p{font-size:13px;color:var(--muted)}
+.soon .lock{width:56px;height:56px;opacity:.95}
+.soon em{font-style:normal;font-size:10px;letter-spacing:1.5px;color:var(--gold);border:1px solid var(--gold-dim);padding:3px 8px;border-radius:20px;margin-bottom:8px;display:inline-block}
+.topup{margin:20px auto 6px;width:calc(100% - 34px);display:flex;align-items:center;justify-content:space-between;
+  height:62px;padding:0 22px;border-radius:30px;border:1px solid var(--gold);background:linear-gradient(180deg,#14110a,#0a0907);
+  font-weight:600;font-size:17px}
+.topup>span{display:flex;align-items:center;gap:14px}
+.topup svg{width:26px;height:26px}
+.foot{text-align:center;color:var(--muted);font-size:11px;margin-top:18px}
+
+/* Модальне вікно */
+.modal{position:fixed;inset:0;z-index:50;display:none;align-items:flex-end;justify-content:center;background:rgba(0,0,0,.72)}
+.modal.open{display:flex;animation:fadeIn .2s ease}
+.sheet{width:100%;max-width:520px;border-radius:26px 26px 0 0;border:1px solid var(--gold-dim);border-bottom:0;
+  background:linear-gradient(180deg,#15120b,#0a0907);padding:24px 20px calc(var(--sab) + 24px);animation:up .3s ease}
+@keyframes up{from{transform:translateY(40px)}to{transform:none}}
+.sheet h2{font-size:22px;margin-bottom:6px}
+.sheet .sub{color:var(--muted);font-size:14px;margin-bottom:18px;line-height:1.4}
+.contact{display:flex;align-items:center;gap:14px;padding:14px 16px;margin-bottom:10px;border-radius:18px;
+  border:1px solid var(--gold-dim);background:var(--card);text-decoration:none;color:var(--text);position:relative;overflow:hidden}
+.contact::after{content:"";position:absolute;inset:0;background:linear-gradient(105deg,transparent 35%,rgba(245,215,122,.14) 50%,transparent 65%);
+  transform:translateX(-100%);animation:shine 3.2s infinite}
+@keyframes shine{to{transform:translateX(100%)}}
+.contact .ic{width:42px;height:42px;border-radius:12px;display:grid;place-items:center;flex:none}
+.contact .ic svg{width:22px;height:22px}
+.ic.tg{background:#229ed9}.ic.ig{background:linear-gradient(45deg,#f9a03f,#e1306c,#833ab4)}
+.contact b{display:block;font-size:16px}
+.contact small{color:var(--muted);font-size:12.5px}
+.founders{margin-top:16px;padding-top:16px;border-top:1px solid rgba(212,175,55,.18)}
+.founders h4{font-size:11px;letter-spacing:2px;color:var(--gold);margin-bottom:10px}
+.founders .row{display:flex;gap:10px}
+.founders .contact{flex:1;margin:0;padding:12px;flex-direction:column;align-items:flex-start;gap:8px}
+.founders .contact b{font-size:14px}
+.btn{width:100%;height:52px;border-radius:26px;font-weight:700;font-size:16px;
+  background:linear-gradient(180deg,var(--gold2),var(--gold));color:#1a1405}
+.btn.ghost{background:none;border:1px solid var(--gold-dim);color:var(--text)}
+.close{margin-top:12px}
+
+/* Тост */
+#toast{position:fixed;left:50%;bottom:calc(var(--sab) + 30px);transform:translate(-50%,20px);opacity:0;pointer-events:none;
+  background:#1b1810;border:1px solid var(--gold-dim);padding:12px 18px;border-radius:20px;font-size:14px;z-index:99;
+  transition:.25s;max-width:88%;text-align:center}
+#toast.show{opacity:1;transform:translate(-50%,0)}
+</style>
+</head>
+<body>
+
+<!-- ===== ГОЛОВНИЙ ЕКРАН ===== -->
+<section id="home" class="screen active">
+  <header class="top">
+    <div class="logo">
+      <svg viewBox="0 0 44 26" fill="none" stroke="#d4af37" stroke-width="2" stroke-linejoin="round"><path d="M3 22 L1 5 L12 13 L22 2 L32 13 L43 5 L41 22 Z" fill="rgba(212,175,55,.18)"/></svg>
+      <b>Arena<i>TS</i></b>
+    </div>
+    <div class="top-right">
+      <div class="bal">
+        <svg class="coin" viewBox="0 0 24 24"><ellipse cx="12" cy="17" rx="9" ry="4" fill="#9c7a1c"/><ellipse cx="12" cy="13" rx="9" ry="4" fill="#c9a227"/><ellipse cx="12" cy="9" rx="9" ry="4" fill="#f5d77a"/></svg>
+        <span id="balance">0.00</span>
+        <button class="plus" onclick="openTopup()" aria-label="Поповнити">+</button>
+      </div>
+      <button class="avatar" onclick="openProfile()" aria-label="Профіль">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#d4af37" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/></svg>
+        <i class="dot"></i>
+      </button>
+    </div>
+  </header>
+
+  <main class="grid">
+    <button class="gcard" onclick="openGame('battleship')">
+      <div class="gart"><svg viewBox="0 0 200 150" preserveAspectRatio="xMidYMid slice">
+        <defs><linearGradient id="gs" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1a1409"/><stop offset="1" stop-color="#060504"/></linearGradient></defs>
+        <rect width="200" height="150" fill="url(#gs)"/>
+        <ellipse cx="100" cy="82" rx="90" ry="22" fill="rgba(212,175,55,.10)"/>
+        <path d="M22 88 L178 88 L166 104 L40 104 Z" fill="#17130a" stroke="#d4af37" stroke-width="1.2"/>
+        <rect x="70" y="70" width="60" height="18" fill="#1d170b" stroke="#d4af37" stroke-width="1"/>
+        <rect x="92" y="50" width="18" height="20" fill="#1d170b" stroke="#d4af37" stroke-width="1"/>
+        <path d="M101 50 V30 M92 38 H110" stroke="#d4af37" stroke-width="1.4"/>
+        <rect x="46" y="80" width="18" height="8" fill="#1d170b" stroke="#d4af37" stroke-width=".8"/>
+        <rect x="136" y="80" width="18" height="8" fill="#1d170b" stroke="#d4af37" stroke-width=".8"/>
+        <path d="M10 112 Q50 106 100 112 T190 112" stroke="rgba(212,175,55,.5)" fill="none"/>
+        <path d="M0 124 Q50 118 100 124 T200 124" stroke="rgba(212,175,55,.25)" fill="none"/>
+      </svg></div>
+      <div class="ginfo"><div><h3>Морський бій</h3><p>1 VS 1</p></div>
+        <span class="arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span></div>
+    </button>
+
+    <button class="gcard" onclick="openGame('checkers')">
+      <div class="gart"><svg viewBox="0 0 200 150" preserveAspectRatio="xMidYMid slice">
+        <rect width="200" height="150" fill="#0b0a08"/>
+        <g fill="#16130d"><rect x="0" y="0" width="50" height="38"/><rect x="100" y="0" width="50" height="38"/><rect x="50" y="38" width="50" height="38"/><rect x="150" y="38" width="50" height="38"/><rect x="0" y="76" width="50" height="38"/><rect x="100" y="76" width="50" height="38"/><rect x="50" y="114" width="50" height="38"/><rect x="150" y="114" width="50" height="38"/></g>
+        <g><ellipse cx="45" cy="52" rx="20" ry="9" fill="#0c0b09" stroke="#3a3223"/><ellipse cx="45" cy="47" rx="20" ry="9" fill="#17140e" stroke="#4a402c"/>
+        <ellipse cx="118" cy="40" rx="20" ry="9" fill="#9c7a1c"/><ellipse cx="118" cy="35" rx="20" ry="9" fill="#f5d77a" stroke="#fff3c4" stroke-width=".6"/>
+        <ellipse cx="150" cy="95" rx="22" ry="10" fill="#9c7a1c"/><ellipse cx="150" cy="89" rx="22" ry="10" fill="#e8c55a" stroke="#fff3c4" stroke-width=".6"/>
+        <ellipse cx="70" cy="110" rx="20" ry="9" fill="#0c0b09" stroke="#3a3223"/><ellipse cx="70" cy="105" rx="20" ry="9" fill="#17140e" stroke="#4a402c"/></g>
+      </svg></div>
+      <div class="ginfo"><div><h3>Шашки</h3><p>1 VS 1</p></div>
+        <span class="arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span></div>
+    </button>
+
+    <button class="gcard" onclick="openGame('fortune')">
+      <div class="gart"><svg viewBox="0 0 200 150" preserveAspectRatio="xMidYMid meet">
+        <rect width="200" height="150" fill="#0a0907"/>
+        <g transform="translate(100 78)">
+          <circle r="56" fill="#0e0c08" stroke="#d4af37" stroke-width="2.5"/>
+          <g fill="#d4af37" opacity=".85">
+            <path d="M0 0 L0 -52 A52 52 0 0 1 37 -37 Z"/><path d="M0 0 L52 0 A52 52 0 0 1 37 37 Z" opacity=".6"/>
+            <path d="M0 0 L0 52 A52 52 0 0 1 -37 37 Z"/><path d="M0 0 L-52 0 A52 52 0 0 1 -37 -37 Z" opacity=".6"/>
+          </g>
+          <circle r="13" fill="#0a0907" stroke="#d4af37" stroke-width="2"/>
+        </g>
+        <path d="M92 14 L108 14 L100 28 Z" fill="#f5d77a"/>
+      </svg></div>
+      <div class="ginfo"><div><h3>Колесо фортуни</h3><p>0x • 2x • 3x • 5x</p></div>
+        <span class="arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span></div>
+    </button>
+
+    <button class="gcard" onclick="openGame('jackpot')">
+      <div class="gart"><svg viewBox="0 0 200 150" preserveAspectRatio="xMidYMid meet">
+        <rect width="200" height="150" fill="#0a0907"/>
+        <ellipse cx="100" cy="100" rx="62" ry="22" fill="#0e0c08" stroke="#d4af37" stroke-width="2.5"/>
+        <ellipse cx="100" cy="98" rx="38" ry="11" fill="#050505" stroke="#8a6d1a"/>
+        <path d="M70 70 L66 38 L84 54 L100 30 L116 54 L134 38 L130 70 Z" fill="rgba(212,175,55,.25)" stroke="#f5d77a" stroke-width="2" stroke-linejoin="round"/>
+        <circle cx="46" cy="64" r="7" fill="#e8c55a"/><circle cx="158" cy="52" r="6" fill="#e8c55a"/><circle cx="150" cy="116" r="8" fill="#e8c55a"/><circle cx="50" cy="118" r="6" fill="#c9a227"/>
+      </svg></div>
+      <div class="ginfo"><div><h3>Колесо джекпоту</h3><p>Спільний розіграш</p></div>
+        <span class="arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span></div>
+    </button>
+  </main>
+
+  <div class="soon">
+    <div><em>СКОРО</em><h3>Інші ігри</h3><p>Скоро на ArenaTS…</p></div>
+    <svg class="lock" viewBox="0 0 48 48" fill="none"><rect x="9" y="21" width="30" height="22" rx="5" fill="#d4af37"/><path d="M16 21v-6a8 8 0 0 1 16 0v6" stroke="#d4af37" stroke-width="3.5"/><circle cx="24" cy="31" r="3.2" fill="#0a0907"/><rect x="22.6" y="31" width="2.8" height="7" rx="1" fill="#0a0907"/></svg>
+  </div>
+
+  <button class="topup" onclick="openTopup()">
+    <span><svg viewBox="0 0 24 24" fill="none" stroke="#d4af37" stroke-width="1.8" stroke-linejoin="round"><path d="M3 7h15a3 3 0 0 1 3 3v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M3 7l12-3v3"/><circle cx="16.5" cy="14" r="1.3" fill="#d4af37"/></svg>Поповнити баланс</span>
+    <svg viewBox="0 0 24 24" fill="none" stroke="#d4af37" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="width:20px;height:20px"><path d="M9 6l6 6-6 6"/></svg>
+  </button>
+  <p class="foot">Віртуальні монети · лише для розваги</p>
+</section>
+
+<!-- ===== ВІКНО ПОПОВНЕННЯ ===== -->
+<div id="topupModal" class="modal" onclick="if(event.target===this)closeTopup()">
+  <div class="sheet">
+    <h2>Поповнення балансу</h2>
+    <p class="sub">Напишіть нам у зручний месенджер, і ми нарахуємо монети на ваш ID.</p>
+    <a class="contact" href="https://t.me/Nytizz" target="_blank" rel="noopener">
+      <span class="ic tg"><svg viewBox="0 0 24 24" fill="#fff"><path d="M21.5 4.3 2.9 11.5c-1.3.5-1.2 1.2-.2 1.5l4.7 1.5 1.8 5.6c.2.6.4.8.8.8.5 0 .7-.2 1-.5l2.3-2.2 4.7 3.5c.9.5 1.5.2 1.7-.8L22.9 5.7c.3-1.2-.4-1.8-1.4-1.4zM8.5 13.7l9.6-6c.5-.3.9-.1.5.2l-7.8 7-.3 3.2z"/></svg></span>
+      <span><b>Telegram</b><small>@Nytizz</small></span>
+    </a>
+    <a class="contact" href="https://instagram.com/fedorchuck.iv" target="_blank" rel="noopener">
+      <span class="ic ig"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.3" cy="6.7" r="1.1" fill="#fff" stroke="none"/></svg></span>
+      <span><b>Instagram</b><small>@fedorchuck.iv</small></span>
+    </a>
+    <div class="founders">
+      <h4>ЗАСНОВНИКИ</h4>
+      <div class="row">
+        <a class="contact" href="https://instagram.com/fedorchuck.iv" target="_blank" rel="noopener">
+          <span class="ic ig"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/></svg></span>
+          <b>@fedorchuck.iv</b>
+        </a>
+        <a class="contact" href="https://instagram.com/fb_bodya" target="_blank" rel="noopener">
+          <span class="ic ig"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/></svg></span>
+          <b>@fb_bodya</b>
+        </a>
+      </div>
+    </div>
+    <button class="btn ghost close" onclick="closeTopup()">Закрити</button>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<!-- ===== ЯДРО: SUPABASE, РОУТЕР, БАЛАНС ===== -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const SUPABASE_URL = 'https://zijuekgxcbfnlofbbtmw.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_Y0UEJuP56sPzRw8Z0bwmbg_cTc6FLRF';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+const $ = (id) => document.getElementById(id);
+const games = {};          // сюди ігри реєструють себе: games.checkers = { open(){} }
+let me = null;             // профіль поточного гравця
+
+// Гроші: у базі цілі одиниці (100 = 1 монета)
+function fmt(units){
+  const v = (Number(units) || 0) / 100;
+  return v.toLocaleString('uk-UA',{minimumFractionDigits:2,maximumFractionDigits:2}).replace(/\u00a0/g,' ');
+}
+function setBalance(units){ $('balance').textContent = fmt(units); }
+
+// Екрани
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  const el = $(id); if (el) el.classList.add('active');
+  window.scrollTo(0,0);
+}
+function toast(msg){
+  const t = $('toast'); t.textContent = msg; t.classList.add('show');
+  clearTimeout(toast._t); toast._t = setTimeout(() => t.classList.remove('show'), 2400);
+}
+
+// Модальне вікно поповнення
+function openTopup(){ $('topupModal').classList.add('open'); }
+function closeTopup(){ $('topupModal').classList.remove('open'); }
+
+// Відкрити гру (ігри з'являться в наступних частинах)
+function openGame(name){
+  if (games[name] && games[name].open) return games[name].open();
+  toast('Ця гра з\u2019явиться в наступній частині');
+}
+// Профіль (буде в Частині 3)
+function openProfile(){
+  if (window.profileOpen) return window.profileOpen();
+  toast('Профіль з\u2019явиться в Частині 3');
+}
+
+// Оновлення балансу із сервера (коли гравець увійшов)
+async function refreshBalance(){
+  const { data:{ session } } = await sb.auth.getSession();
+  if (!session) { me = null; setBalance(0); return; }
+  const { data } = await sb.from('profiles').select('*').eq('id', session.user.id).single();
+  if (data) { me = data; setBalance(data.balance); }
+}
+refreshBalance();
+</script>
+<!-- ===== ЧАСТИНА 3: ВХІД, ПРОФІЛЬ, БАЛАНС ===== -->
+<style>
+.field{width:100%;height:54px;border-radius:16px;border:1px solid var(--gold-dim);background:var(--card);
+  color:var(--text);font:inherit;font-size:16px;padding:0 16px;margin-bottom:12px;outline:none}
+.field:focus{border-color:var(--gold)}
+.auth-wrap{min-height:80vh;display:flex;flex-direction:column;justify-content:center}
+.auth-wrap .logo{align-items:center;margin-bottom:28px}
+.auth-wrap .logo svg{margin:0 0 4px}
+.tabs{display:flex;gap:8px;margin-bottom:18px}
+.tab{flex:1;height:44px;border-radius:22px;border:1px solid var(--gold-dim);color:var(--muted);font-weight:600}
+.tab.on{border-color:var(--gold);color:var(--gold);background:rgba(212,175,55,.08)}
+.err{color:var(--bad);font-size:13.5px;min-height:20px;margin:-2px 0 10px;text-align:center}
+.hint{color:var(--muted);font-size:12.5px;text-align:center;margin-top:14px;line-height:1.4}
+.back{display:flex;align-items:center;gap:6px;color:var(--gold);font-weight:600;margin-bottom:18px;height:40px}
+.pcard{border:1px solid var(--gold-dim);border-radius:var(--r);background:linear-gradient(180deg,var(--card2),var(--card));padding:20px;margin-bottom:14px}
+.phead{display:flex;align-items:center;gap:16px}
+.pav{width:68px;height:68px;border-radius:50%;border:1.5px solid var(--gold);display:grid;place-items:center;
+  font-size:28px;font-weight:800;color:var(--gold);background:#0c0a06;flex:none}
+.pname{font-size:22px;font-weight:800}
+.pid{color:var(--muted);font-size:13.5px;margin-top:3px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:18px}
+.stat{text-align:center;padding:12px 4px;border-radius:14px;background:#0c0a07;border:1px solid rgba(212,175,55,.15)}
+.stat b{display:block;font-size:20px}
+.stat small{color:var(--muted);font-size:11.5px}
+.sec{font-size:11px;letter-spacing:2px;color:var(--gold);margin:6px 0 10px}
+.tx{display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid rgba(212,175,55,.12);font-size:14px}
+.tx:last-child{border:0}
+.tx small{display:block;color:var(--muted);font-size:12px;margin-top:2px}
+.tx .p{color:var(--ok);font-weight:700}.tx .m{color:var(--bad);font-weight:700}
+.empty{color:var(--muted);text-align:center;padding:16px 0;font-size:14px}
+</style>
+
+<!-- Екран входу -->
+<section id="auth" class="screen">
+  <div class="auth-wrap">
+    <div class="logo">
+      <svg viewBox="0 0 44 26" fill="none" stroke="#d4af37" stroke-width="2" stroke-linejoin="round" style="width:56px;height:34px"><path d="M3 22 L1 5 L12 13 L22 2 L32 13 L43 5 L41 22 Z" fill="rgba(212,175,55,.18)"/></svg>
+      <b>Arena<i>TS</i></b>
+    </div>
+    <div class="tabs">
+      <button class="tab on" id="tabLogin" onclick="authMode('login')">Вхід</button>
+      <button class="tab" id="tabReg" onclick="authMode('reg')">Реєстрація</button>
+    </div>
+    <input class="field" id="aUser" placeholder="Нікнейм" autocomplete="username" autocapitalize="off" autocorrect="off" maxlength="16">
+    <input class="field" id="aPass" type="password" placeholder="Пароль" autocomplete="current-password">
+    <input class="field" id="aPass2" type="password" placeholder="Повторіть пароль" autocomplete="new-password" style="display:none">
+    <div class="err" id="aErr"></div>
+    <button class="btn" id="aBtn" onclick="submitAuth()">Увійти</button>
+    <p class="hint">Нік: 3–16 символів, латиниця, цифри та _<br>Пароль: мінімум 6 символів<br>Віртуальні монети · лише для розваги</p>
+  </div>
+</section>
+
+<!-- Екран профілю -->
+<section id="profile" class="screen">
+  <button class="back" onclick="showScreen('home')">
+    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg> Назад
+  </button>
+  <div class="pcard">
+    <div class="phead">
+      <div class="pav" id="pAv">?</div>
+      <div><div class="pname" id="pName">—</div><div class="pid" id="pId">ID: —</div><div class="pid" id="pDate"></div></div>
+    </div>
+    <div class="stats">
+      <div class="stat"><b id="pWins">0</b><small>Перемоги</small></div>
+      <div class="stat"><b id="pLoss">0</b><small>Поразки</small></div>
+      <div class="stat"><b id="pBal">0.00</b><small>Баланс</small></div>
+    </div>
+  </div>
+  <button class="btn" onclick="openTopup()" style="margin-bottom:12px">Поповнити баланс</button>
+  <a id="adminLink" href="admin.html" class="btn ghost" style="display:none;align-items:center;justify-content:center;text-decoration:none;margin-bottom:12px">Адмін-панель</a>
+  <div class="pcard">
+    <div class="sec">ІСТОРІЯ ОПЕРАЦІЙ</div>
+    <div id="pTx"><div class="empty">Завантаження…</div></div>
+  </div>
+  <button class="btn ghost" onclick="logout()">Вийти з акаунта</button>
+</section>
+
+<script>
+// ---- Допоміжне ----
+const KIND = {topup:'Поповнення',withdraw:'Списання адміном',bet:'Ставка',win:'Виграш',refund:'Повернення',fee:'Комісія'};
+const esc = (s) => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function errText(e){
+  const m = (e && (e.message || e.error_description)) || String(e);
+  if (/Invalid login/i.test(m)) return 'Невірний нік або пароль';
+  if (/already registered|already exists|duplicate|Database error saving/i.test(m)) return 'Цей нік вже зайнятий';
+  if (/rate limit/i.test(m)) return 'Забагато спроб, зачекайте хвилину';
+  if (/network|fetch/i.test(m)) return 'Немає зв\u2019язку з сервером';
+  return 'Помилка: ' + m;
+}
+window.addEventListener('unhandledrejection', ev => toast(errText(ev.reason)));
+
+// ---- Вхід / реєстрація ----
+let mode = 'login';
+function authMode(m){
+  mode = m;
+  $('tabLogin').classList.toggle('on', m==='login');
+  $('tabReg').classList.toggle('on', m==='reg');
+  $('aPass2').style.display = m==='reg' ? 'block' : 'none';
+  $('aPass').autocomplete = m==='reg' ? 'new-password' : 'current-password';
+  $('aBtn').textContent = m==='reg' ? 'Створити акаунт' : 'Увійти';
+  $('aErr').textContent = '';
+}
+const mail = (u) => u.toLowerCase() + '@arenats.game';
+
+async function submitAuth(){
+  const u = $('aUser').value.trim(), p = $('aPass').value, err = $('aErr');
+  err.textContent = '';
+  if (!/^[A-Za-z0-9_]{3,16}$/.test(u)) { err.textContent = 'Нік: 3–16 символів, латиниця, цифри, _'; return; }
+  if (p.length < 6) { err.textContent = 'Пароль мінімум 6 символів'; return; }
+  if (mode==='reg' && p !== $('aPass2').value) { err.textContent = 'Паролі не збігаються'; return; }
+  const btn = $('aBtn'); btn.disabled = true;
+  try{
+    if (mode==='reg'){
+      const { error } = await sb.auth.signUp({ email: mail(u), password: p, options:{ data:{ username:u } } });
+      if (error) throw error;
+    } else {
+      const { error } = await sb.auth.signInWithPassword({ email: mail(u), password: p });
+      if (error) throw error;
+    }
+    $('aPass').value = ''; $('aPass2').value = '';
+  }catch(e){ err.textContent = errText(e); }
+  btn.disabled = false;
+}
+['aUser','aPass','aPass2'].forEach(id => $(id).addEventListener('keydown', e => { if(e.key==='Enter') submitAuth(); }));
+
+async function logout(){ await sb.auth.signOut(); }
+
+// ---- Завантаження профілю, бан і кік ----
+async function refreshBalance(){
+  const { data:{ session } } = await sb.auth.getSession();
+  if (!session) { me = null; setBalance(0); return false; }
+  const { data, error } = await sb.from('profiles').select('*').eq('id', session.user.id).single();
+  if (error || !data) return false;
+  me = data; setBalance(data.balance);
+  if (data.is_banned) {
+    await sb.auth.signOut();
+    $('aErr').textContent = 'Акаунт заблоковано' + (data.ban_reason ? ': ' + data.ban_reason : '');
+    return false;
+  }
+  const lastIn = session.user.last_sign_in_at ? new Date(session.user.last_sign_in_at) : 0;
+  if (data.kicked_at && new Date(data.kicked_at) > lastIn) {
+    await sb.auth.signOut();
+    $('aErr').textContent = 'Вас було виключено адміністратором. Увійдіть знову.';
+    return false;
+  }
+  return true;
+}
+
+async function route(){
+  const { data:{ session } } = await sb.auth.getSession();
+  if (!session) { me = null; setBalance(0); showScreen('auth'); return; }
+  const ok = await refreshBalance();
+  if (!ok) { showScreen('auth'); return; }
+  if ($('auth').classList.contains('active')) showScreen('home');
+}
+sb.auth.onAuthStateChange((ev) => {
+  if (ev === 'SIGNED_IN' || ev === 'SIGNED_OUT' || ev === 'INITIAL_SESSION') setTimeout(route, 0);
+});
+
+// Оновлення балансу раз на 15 с, лише коли вкладка відкрита
+setInterval(() => { if (!document.hidden && me) refreshBalance().then(ok => { if(!ok && me===null) showScreen('auth'); }); }, 15000);
+document.addEventListener('visibilitychange', () => { if (!document.hidden && me) refreshBalance(); });
+
+// ---- Профіль ----
+window.profileOpen = async function(){
+  if (!me) { showScreen('auth'); return; }
+  showScreen('profile');
+  const fill = () => {
+    $('pAv').textContent = me.username.charAt(0).toUpperCase();
+    $('pName').textContent = me.username;
+    $('pId').textContent = 'ID: ' + me.public_id;
+    $('pDate').textContent = 'З нами з ' + new Date(me.created_at).toLocaleDateString('uk-UA');
+    $('pWins').textContent = me.wins; $('pLoss').textContent = me.losses;
+    $('pBal').textContent = fmt(me.balance);
+    $('adminLink').style.display = me.is_admin ? 'flex' : 'none';
+  };
+  fill();
+  await refreshBalance(); fill();
+  const { data, error } = await sb.from('transactions')
+    .select('amount,kind,note,created_at').order('id',{ascending:false}).limit(25);
+  const box = $('pTx');
+  if (error) { box.innerHTML = '<div class="empty">Не вдалося завантажити</div>'; return; }
+  if (!data.length) { box.innerHTML = '<div class="empty">Операцій поки немає</div>'; return; }
+  box.innerHTML = data.map(t => {
+    const pos = t.amount > 0;
+    return `<div class="tx"><div>${esc(KIND[t.kind] || t.kind)}<small>${new Date(t.created_at).toLocaleString('uk-UA')}${t.note ? ' · ' + esc(t.note) : ''}</small></div>
+      <span class="${pos?'p':'m'}">${pos?'+':'−'}${fmt(Math.abs(t.amount))}</span></div>`;
+  }).join('');
+};
+
+// Старт
+route();
+</script>
+<!-- ===== ЧАСТИНА 4: МОРСЬКИЙ БІЙ ===== -->
+<style>
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
+.chip{min-height:44px;padding:0 16px;border-radius:22px;border:1px solid var(--gold-dim);color:var(--text);font-weight:600;display:inline-flex;align-items:center;gap:6px}
+.chip.on{border-color:var(--gold);color:var(--gold);background:rgba(212,175,55,.1)}
+.chip.off{opacity:.35}
+.chip u{display:inline-block;width:9px;height:14px;border-radius:2px;background:var(--gold);margin-right:-3px}
+.chip em{font-style:normal;font-size:12px;color:var(--muted);margin-left:8px}
+.bsinfo{line-height:1.7;color:var(--muted);font-size:14px;margin:4px 0}
+.bsinfo b{color:var(--text)}
+.bsb{display:grid;grid-template-columns:repeat(11,1fr);gap:2px;padding:8px;border-radius:18px;border:1px solid var(--gold-dim);
+  background:linear-gradient(180deg,#0b141b,#05090d);touch-action:manipulation;user-select:none;-webkit-user-select:none}
+.bsb .l{aspect-ratio:1;display:grid;place-items:center;font-size:10px;color:var(--muted);font-style:normal}
+.bsb .c{aspect-ratio:1;border-radius:5px;background:#0f1d27;border:1px solid rgba(110,160,190,.14);position:relative;display:block}
+.bsb.live .c{box-shadow:inset 0 0 0 1px rgba(212,175,55,.16)}
+.c.sh{background:linear-gradient(180deg,#9a8650,#5e4f2a);border-color:var(--gold)}
+.c.rv{background:#2a2414;border-color:rgba(212,175,55,.5)}
+.c.m::after,.c.ar::after{content:"";position:absolute;inset:40%;border-radius:50%;background:#8fb4c9}
+.c.ar::after{opacity:.3}
+.c.h{background:#3b1411;border-color:var(--bad)}
+.c.h::after,.c.sk::after{content:"";position:absolute;inset:20%;
+  background:linear-gradient(45deg,transparent 42%,#ff6a5e 42%,#ff6a5e 58%,transparent 58%),
+             linear-gradient(-45deg,transparent 42%,#ff6a5e 42%,#ff6a5e 58%,transparent 58%)}
+.c.sk{background:#2a0d0b;border-color:var(--gold)}
+.c.sk::after{background:linear-gradient(45deg,transparent 42%,#f5d77a 42%,#f5d77a 58%,transparent 58%),
+             linear-gradient(-45deg,transparent 42%,#f5d77a 42%,#f5d77a 58%,transparent 58%)}
+.c.fresh{animation:pop .5s ease}
+@keyframes pop{0%{transform:scale(1.6);filter:brightness(2.5)}100%{transform:none;filter:none}}
+.c.pend{animation:pend .6s infinite alternate}
+@keyframes pend{to{background:#1f3a50}}
+.bsbar{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.bsbar .who{flex:1;min-width:0}
+.bsbar .who b{display:block;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bsbar .who small{color:var(--muted);font-size:11.5px}
+.bsbar .r{text-align:right}
+.clock{width:58px;height:58px;border-radius:50%;border:2px solid var(--gold);display:grid;place-items:center;
+  font-weight:800;font-size:22px;flex:none;font-variant-numeric:tabular-nums}
+.clock.warn{border-color:var(--bad);color:var(--bad);animation:pulse .7s infinite alternate}
+@keyframes pulse{to{transform:scale(1.08)}}
+.turnbar{text-align:center;font-weight:700;padding:9px;border-radius:14px;border:1px solid var(--gold-dim);margin-bottom:8px;color:var(--muted)}
+.turnbar.mine{color:#1a1405;background:linear-gradient(180deg,var(--gold2),var(--gold));border-color:var(--gold)}
+.tbar{height:4px;border-radius:3px;background:#1a1710;margin-bottom:10px;overflow:hidden}
+.tbar i{display:block;height:100%;background:var(--gold);width:100%;transition:width .3s linear}
+.bsmine{width:58%;margin:12px auto 0}
+.bsmine .bsb{padding:5px;gap:1px;border-radius:12px}
+.bsmine .l{font-size:7px}
+.pot{text-align:center;color:var(--muted);font-size:13px;margin-top:12px}
+.spin{width:54px;height:54px;border-radius:50%;border:3px solid rgba(212,175,55,.2);border-top-color:var(--gold);animation:rot 1s linear infinite;margin:24px auto}
+@keyframes rot{to{transform:rotate(360deg)}}
+.row2{display:flex;gap:10px;margin:12px 0}
+.row2 .btn{height:46px;font-size:14px}
+.ptime{font-weight:800;font-size:20px;color:var(--gold);font-variant-numeric:tabular-nums}
+</style>
+
+<section id="bs" class="screen">
+  <!-- Лобі -->
+  <div id="bsLobby">
+    <button class="back" onclick="showScreen('home')">
+      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg> Назад
+    </button>
+    <div class="pcard">
+      <h2 style="font-size:26px;margin-bottom:6px">Морський бій</h2>
+      <p style="color:var(--muted);font-size:14px;line-height:1.5;margin-bottom:16px">1 VS 1 · поле 10×10 · влучив — ходиш ще раз · <span id="bsSecs">30</span> с на хід</p>
+      <div class="sec">СТАВКА</div>
+      <div class="chips" id="bsStakes"></div>
+      <div class="bsinfo" id="bsInfo"></div>
+    </div>
+    <button class="btn" id="bsFind" onclick="bs.find()">Знайти суперника</button>
+    <p class="hint">Віртуальні монети. Якщо вийти з матчу, час ходу продовжує йти, а після його закінчення ви програєте.</p>
+  </div>
+
+  <!-- Пошук суперника -->
+  <div id="bsWait" style="display:none">
+    <div class="pcard" style="text-align:center;margin-top:30px">
+      <div class="spin"></div>
+      <h2 style="margin-bottom:6px">Шукаємо суперника…</h2>
+      <p style="color:var(--muted)">Ставка: <b style="color:var(--text)" id="bsWStake">0</b></p>
+    </div>
+    <button class="btn ghost" onclick="bs.cancel()">Скасувати пошук</button>
+    <button class="btn ghost close" onclick="bs.menu()">У меню (пошук триває)</button>
+  </div>
+
+  <!-- Розстановка -->
+  <div id="bsPlace" style="display:none">
+    <div class="bsbar">
+      <button class="chip" onclick="bs.menu()" style="min-height:40px;padding:0 12px">←</button>
+      <div class="who"><b id="bsPSt">Розставте флот</b><small>Суперник: <span id="bsPOpp">…</span></small></div>
+      <div class="ptime" id="bsPT">1:30</div>
+    </div>
+    <div class="bsb" id="bsPB"></div>
+    <div id="bsCtl">
+      <div class="chips" id="bsSizes" style="margin-top:14px"></div>
+      <div class="row2">
+        <button class="btn ghost" id="bsDir" onclick="bs.dir()">↔ Горизонтально</button>
+        <button class="btn ghost" onclick="bs.auto()">Авто</button>
+        <button class="btn ghost" onclick="bs.clear()">Очистити</button>
+      </div>
+      <button class="btn" id="bsReady" onclick="bs.ready()" disabled>Готово</button>
+      <p class="hint">Оберіть корабель, торкніться клітинки (корабель росте вправо або вниз). Торкніться корабля ще раз, щоб прибрати.</p>
+    </div>
+  </div>
+
+  <!-- Гра -->
+  <div id="bsPlay" style="display:none">
+    <div class="bsbar">
+      <button class="chip" onclick="bs.menu()" style="min-height:40px;padding:0 12px">←</button>
+      <div class="who"><b id="bsMe">—</b><small>Ви</small></div>
+      <div class="clock" id="bsClock"><span id="bsT">30</span></div>
+      <div class="who r"><b id="bsOpp">—</b><small>Суперник</small></div>
+    </div>
+    <div class="turnbar" id="bsTurn">…</div>
+    <div class="tbar"><i id="bsBar"></i></div>
+    <div class="bsb" id="bsEB"></div>
+    <div class="bsmine"><div class="bsb" id="bsMB"></div></div>
+    <div class="pot" id="bsPot"></div>
+  </div>
+</section>
+
+<div id="bsResult" class="modal">
+  <div class="sheet" style="text-align:center">
+    <h2 id="bsResT" style="font-size:30px;margin-bottom:8px"></h2>
+    <p class="sub" id="bsResD"></p>
+    <button class="btn" onclick="bs.again()">Грати ще</button>
+    <button class="btn ghost close" onclick="bs.menu()">До меню</button>
+  </div>
+</div>
+
+<script>
+(function(){
+const LET='ABCDEFGHIJ', SIZES=[4,3,2,1], NEED={4:1,3:2,2:3,1:4};
+const S={id:null,s:null,stake:100,cfg:{stakes:[1000,5000,10000,50000,100000, 200000],bp:700,secs:30,place:90},
+  place:[],size:4,horiz:true,pb:[],eb:[],mb:[],prev:{},poll:null,tick:null,busy:false,again:false,
+  deadline:0,total:30,zero:false,shooting:false,done:false};
+const rpc=async(fn,args)=>{const{data,error}=await sb.rpc(fn,args);if(error)throw error;return data;};
+const view=(n)=>['Lobby','Wait','Place','Play'].forEach(x=>{$('bs'+x).style.display=x===n?'block':'none'});
+const flat=(a)=>(a||[]).reduce((r,x)=>r.concat(x),[]);
+
+function bsErr(e){
+  const m=(e&&e.message)||'';
+  if(/insufficient_funds/.test(m))return 'Недостатньо коштів. Поповніть баланс';
+  if(/not_your_turn/.test(m))return 'Зараз не ваш хід';
+  if(/already_shot/.test(m))return 'Сюди вже стріляли';
+  if(/bad_fleet/.test(m))return 'Некоректна розстановка';
+  if(/banned/.test(m))return 'Акаунт заблоковано';
+  if(/not_active|forbidden|cannot_cancel|already_placed/.test(m))return 'Стан матчу змінився';
+  return errText(e);
+}
+
+// ---------- Поле ----------
+function build(el,tap){
+  let h='<i class="l"></i>'+LET.split('').map(x=>'<i class="l">'+x+'</i>').join('');
+  for(let r=0;r<10;r++){h+='<i class="l">'+(r+1)+'</i>';for(let c=0;c<10;c++)h+='<b class="c" data-i="'+(r*10+c)+'"></b>';}
+  el.innerHTML=h;
+  el.onclick=(e)=>{const t=e.target.closest('.c');if(t&&tap)tap(+t.dataset.i);};
+  return Array.prototype.slice.call(el.querySelectorAll('.c'));
+}
+function paint(key,cells,m){
+  const p=S.prev[key]||[];
+  for(let i=0;i<100;i++){
+    if(p[i]!==m[i]){
+      const fresh=p.length&&/( h| m| sk)$/.test(m[i]);
+      cells[i].className=m[i]+(fresh?' fresh':'');
+    }
+  }
+  S.prev[key]=m;
+}
+function around(ships){
+  const set=new Set();
+  ships.forEach(sh=>sh.forEach(c=>{const r=(c/10)|0,cc=c%10;
+    for(let dr=-1;dr<=1;dr++)for(let dc=-1;dc<=1;dc++){const nr=r+dr,nc=cc+dc;
+      if(nr>=0&&nr<10&&nc>=0&&nc<10)set.add(nr*10+nc);}}));
+  return set;
+}
+function enemyModel(s){
+  const m=Array(100).fill('c');
+  if(s.opp_fleet)flat(s.opp_fleet).forEach(i=>{m[i]='c rv'});
+  around(s.sunk).forEach(i=>{if(m[i]==='c')m[i]='c ar';});
+  s.my_shots.forEach(x=>{m[x[0]]=x[1]?'c h':'c m';});
+  flat(s.sunk).forEach(i=>{m[i]='c sk';});
+  return m;
+}
+function myModel(s){
+  const m=Array(100).fill('c');
+  flat(s.my_fleet).forEach(i=>{m[i]='c sh';});
+  s.opp_shots.forEach(x=>{m[x[0]]=x[1]?'c sh h':'c m';});
+  return m;
+}
+
+// ---------- Розстановка ----------
+function shipCells(n,r,c,h){
+  const out=[];
+  for(let k=0;k<n;k++){const rr=h?r:r+k,cc=h?c+k:c;if(rr>9||cc>9)return null;out.push(rr*10+cc);}
+  return out;
+}
+function fits(cells,occ){
+  for(const c of cells){const r=(c/10)|0,cc=c%10;
+    for(let dr=-1;dr<=1;dr++)for(let dc=-1;dc<=1;dc++){const nr=r+dr,nc=cc+dc;
+      if(nr>=0&&nr<10&&nc>=0&&nc<10&&occ.has(nr*10+nc))return false;}}
+  return true;
+}
+function autoFleet(){
+  const sizes=[4,3,3,2,2,2,1,1,1,1],rnd=(n)=>Math.floor(Math.random()*n);
+  for(let a=0;a<300;a++){
+    const fleet=[],occ=new Set();let ok=true;
+    for(const n of sizes){
+      let done=false;
+      for(let t=0;t<120&&!done;t++){
+        const cells=shipCells(n,rnd(10),rnd(10),Math.random()<.5);
+        if(cells&&fits(cells,occ)){cells.forEach(x=>occ.add(x));fleet.push(cells);done=true;}
+      }
+      if(!done){ok=false;break;}
+    }
+    if(ok)return fleet;
+  }
+  return [];
+}
+const used=(n)=>S.place.filter(s=>s.length===n).length;
+function drawPlace(){
+  const m=Array(100).fill('c');
+  flat(S.place).forEach(i=>{m[i]='c sh';});
+  paint('pb',S.pb,m);
+  $('bsSizes').innerHTML=SIZES.map(n=>{const left=NEED[n]-used(n);
+    return '<button class="chip'+(S.size===n?' on':'')+(left?'':' off')+'" onclick="bs.pick('+n+')">'+'<u></u>'.repeat(n)+'<em>×'+left+'</em></button>';}).join('');
+  $('bsReady').disabled=S.place.length!==10;
+  $('bsDir').textContent=S.horiz?'↔ Горизонтально':'↕ Вертикально';
+}
+function placeTap(i){
+  if(S.s&&S.s.my_ready)return;
+  const hit=S.place.findIndex(sh=>sh.indexOf(i)>=0);
+  if(hit>=0){S.place.splice(hit,1);drawPlace();return;}
+  if(used(S.size)>=NEED[S.size]){toast('Цього корабля вже розставлено');return;}
+  const cells=shipCells(S.size,(i/10)|0,i%10,S.horiz);
+  if(!cells||!fits(cells,new Set(flat(S.place)))){toast('Сюди не можна: вихід за поле або дотик до іншого корабля');return;}
+  S.place.push(cells);
+  const nx=SIZES.find(n=>used(n)<NEED[n]);if(nx)S.size=nx;
+  drawPlace();
+}
+
+// ---------- Таймер ----------
+function setDeadline(left,total){S.deadline=Date.now()+left*1000;S.total=total||left||30;S.zero=false;}
+function clock(){
+  const s=S.s;if(!s)return;
+  const left=Math.max(0,Math.ceil((S.deadline-Date.now())/1000));
+  if(s.status==='active'){
+    $('bsT').textContent=left;
+    $('bsBar').style.width=Math.min(100,left/S.total*100)+'%';
+    $('bsClock').classList.toggle('warn',left<=10);
+  }else if(s.status==='placing'){
+    $('bsPT').textContent=Math.floor(left/60)+':'+String(left%60).padStart(2,'0');
+  }
+  if(left===0&&!S.zero&&(s.status==='active'||s.status==='placing')){S.zero=true;setTimeout(poll,400);}
+}
+
+// ---------- Стан ----------
+function apply(s){
+  S.s=s;
+  if(s.status==='waiting'){view('Wait');$('bsWStake').textContent=fmt(s.stake);return;}
+  if(s.status==='placing'){
+    view('Place');
+    if(s.my_ready)S.place=s.my_fleet||S.place;
+    setDeadline(s.left,S.cfg.place);
+    $('bsCtl').style.display=s.my_ready?'none':'block';
+    $('bsPSt').textContent=s.my_ready?'Чекаємо суперника…':'Розставте флот';
+    $('bsPOpp').textContent=s.opponent||'…';
+    drawPlace();clock();return;
+  }
+  if(s.status==='active'){
+    view('Play');
+    setDeadline(s.left,s.turn_secs);
+    const mine=s.turn===s.me;
+    $('bsMe').textContent=(me&&me.username)||'—';
+    $('bsOpp').textContent=s.opponent||'—';
+    const t=$('bsTurn');t.textContent=mine?'Ваш хід — стріляйте':'Хід суперника';t.className='turnbar'+(mine?' mine':'');
+    $('bsEB').classList.toggle('live',mine);
+    paint('eb',S.eb,enemyModel(s));paint('mb',S.mb,myModel(s));
+    const pot=s.stake*2;
+    $('bsPot').textContent='Банк '+fmt(pot)+' · переможцю '+fmt(pot-Math.floor(pot*S.cfg.bp/10000));
+    clock();return;
+  }
+  finish(s);
+}
+function finish(s){
+  if(S.done)return;S.done=true;stop();
+  let T,D,col='var(--gold)';
+  if(s.status==='cancelled'){T='Матч скасовано';D='Суперник не знайшовся вчасно. Ставку повернено.';lobby();}
+  else{
+    view('Play');
+    $('bsMe').textContent=(me&&me.username)||'—';$('bsOpp').textContent=s.opponent||'—';
+    $('bsTurn').textContent='Матч завершено';$('bsTurn').className='turnbar';$('bsEB').classList.remove('live');
+    $('bsClock').classList.remove('warn');$('bsT').textContent='0';$('bsBar').style.width='0%';
+    paint('eb',S.eb,enemyModel(s));paint('mb',S.mb,myModel(s));
+    if(s.winner===s.me){T='Перемога!';D='Виграш +'+fmt(s.payout)+' (комісія '+fmt(s.fee)+')'+(s.reason==='timeout'?' · суперник не встиг':'');}
+    else{T='Поразка';col='var(--bad)';D='Ставка '+fmt(s.stake)+' програна'+(s.reason==='timeout'?' · час вийшов':'');}
+  }
+  $('bsResT').textContent=T;$('bsResT').style.color=col;$('bsResD').textContent=D;
+  $('bsResult').classList.add('open');
+  refreshBalance();
+}
+async function poll(){
+  if(!S.id)return;
+  if(S.busy){S.again=true;return;}
+  S.busy=true;
+  try{const s=await rpc('bs_state',{p_id:S.id});if(s.id===S.id)apply(s);}
+  catch(e){if(/forbidden/.test((e&&e.message)||'')){stop();S.id=null;lobby();}}
+  S.busy=false;
+  if(S.again){S.again=false;poll();}
+}
+function stop(){clearInterval(S.poll);clearInterval(S.tick);S.poll=S.tick=null;}
+
+// ---------- Дії ----------
+async function shoot(i){
+  const s=S.s;
+  if(!s||s.status!=='active'||s.turn!==s.me||S.shooting)return;
+  if(s.my_shots.some(x=>x[0]===i))return;
+  S.shooting=true;S.eb[i].classList.add('pend');
+  try{await rpc('bs_shoot',{p_id:S.id,p_cell:i});await poll();}
+  catch(e){S.eb[i].classList.remove('pend');toast(bsErr(e));await poll();}
+  S.shooting=false;
+}
+function enter(id){
+  stop();S.id=id;S.s=null;S.place=[];S.prev={};S.done=false;S.size=4;S.horiz=true;
+  S.pb=build($('bsPB'),placeTap);S.eb=build($('bsEB'),shoot);S.mb=build($('bsMB'),null);
+  drawPlace();
+  $('bsResult').classList.remove('open');
+  S.poll=setInterval(()=>{if(!document.hidden)poll();},1500);
+  S.tick=setInterval(clock,250);
+  view('Wait');poll();refreshBalance();
+}
+async function loadCfg(){
+  try{
+    const{data}=await sb.from('config').select('key,value');
+    (data||[]).forEach(r=>{
+      if(r.key==='bs_stakes')S.cfg.stakes=r.value;
+      if(r.key==='commission_bp')S.cfg.bp=r.value.battleship;
+      if(r.key==='turn_seconds')S.cfg.secs=r.value.battleship;
+      if(r.key==='bs_place_seconds')S.cfg.place=Number(r.value);
+    });
+  }catch(e){}
+}
+function lobby(){
+  stop();S.id=null;view('Lobby');
+  $('bsSecs').textContent=S.cfg.secs;
+  if(S.cfg.stakes.indexOf(S.stake)<0)S.stake=S.cfg.stakes[0];
+  $('bsStakes').innerHTML=S.cfg.stakes.map(v=>'<button class="chip'+(v===S.stake?' on':'')+'" onclick="bs.stake('+v+')">'+fmt(v)+'</button>').join('');
+  const pot=S.stake*2,fee=Math.floor(pot*S.cfg.bp/10000);
+  $('bsInfo').innerHTML='Банк матчу: <b>'+fmt(pot)+'</b><br>Переможець отримує: <b>'+fmt(pot-fee)+'</b> <small>(комісія '+(S.cfg.bp/100)+'%)</small>';
+  $('bsFind').textContent=(me&&me.balance>=S.stake)?'Знайти суперника':'Поповнити баланс';
+}
+async function open(){
+  if(!me){showScreen('auth');return;}
+  showScreen('bs');view('Lobby');
+  await loadCfg();await refreshBalance();
+  try{const id=await rpc('bs_my_game');if(id){enter(id);return;}}catch(e){}
+  lobby();
+}
+
+window.bs={
+  open:open,
+  stake:(v)=>{S.stake=v;lobby();},
+  find:async()=>{
+    if(!me||me.balance<S.stake){openTopup();return;}
+    try{const id=await rpc('bs_join',{p_stake:S.stake});enter(id);}catch(e){toast(bsErr(e));}
+  },
+  cancel:async()=>{
+    try{await rpc('bs_cancel',{p_id:S.id});await refreshBalance();lobby();}
+    catch(e){toast(bsErr(e));poll();}
+  },
+  pick:(n)=>{if(NEED[n]-used(n)>0){S.size=n;drawPlace();}},
+  dir:()=>{S.horiz=!S.horiz;drawPlace();},
+  auto:()=>{S.place=autoFleet();S.size=SIZES.find(n=>used(n)<NEED[n])||4;drawPlace();},
+  clear:()=>{S.place=[];S.size=4;drawPlace();},
+  ready:async()=>{
+    if(S.place.length!==10)return;
+    try{await rpc('bs_place',{p_id:S.id,p_fleet:S.place});await poll();}
+    catch(e){toast(bsErr(e));poll();}
+  },
+  menu:()=>{$('bsResult').classList.remove('open');stop();showScreen('home');refreshBalance();},
+  again:()=>{$('bsResult').classList.remove('open');refreshBalance().then(lobby);}
+};
+games.battleship={open:open};
+document.addEventListener('visibilitychange',()=>{if(!document.hidden&&S.id&&!S.done)poll();});
+})();
+</script>
+<!-- ===== ЧАСТИНА 5: ШАШКИ ===== -->
+<style>
+.ckb{display:grid;grid-template-columns:repeat(8,1fr);border-radius:14px;overflow:hidden;border:3px solid #4a3418;
+  box-shadow:0 8px 24px rgba(0,0,0,.6),0 0 0 1px rgba(212,175,55,.35);aspect-ratio:1;background:#2a1b0c;
+  user-select:none;-webkit-user-select:none;touch-action:manipulation}
+.ckc{position:relative;aspect-ratio:1;display:block}
+.ckc.lt{background:linear-gradient(135deg,#d9b680,#c29a5f)}
+.ckc.dk{background:linear-gradient(135deg,#5a3a1c,#3d2611)}
+.ckc.lm::before{content:"";position:absolute;inset:0;background:rgba(212,175,55,.25)}
+.ckc.sel::before{content:"";position:absolute;inset:0;background:rgba(245,215,122,.45)}
+.ckc.tg::after{content:"";position:absolute;inset:34%;border-radius:50%;background:rgba(245,215,122,.9);box-shadow:0 0 8px rgba(245,215,122,.7)}
+.pc{position:absolute;inset:10%;border-radius:50%;z-index:1;box-shadow:0 4px 5px rgba(0,0,0,.55),inset 0 -3px 4px rgba(0,0,0,.35)}
+.pc.r{background:radial-gradient(circle at 35% 30%,#ff7a6e,#c4271c 55%,#7d130c)}
+.pc.b{background:radial-gradient(circle at 35% 30%,#5d5d5d,#1c1c1c 55%,#050505)}
+.pc::before{content:"";position:absolute;inset:18%;border-radius:50%;border:1.5px solid rgba(255,255,255,.2)}
+.pc.k::after{content:"\265B";position:absolute;inset:0;display:grid;place-items:center;color:#f5d77a;
+  font-size:clamp(14px,5.2vw,26px);text-shadow:0 1px 2px #000}
+.ckc.mv .pc{box-shadow:0 0 0 2px rgba(245,215,122,.6),0 4px 5px rgba(0,0,0,.55)}
+.ckc.sel .pc{transform:translateY(-3px) scale(1.07);box-shadow:0 0 0 2px #f5d77a,0 8px 10px rgba(0,0,0,.6)}
+.ckp{display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:16px;border:1px solid var(--gold-dim);background:var(--card);margin:10px 0}
+.ckp.act{border-color:var(--gold);box-shadow:0 0 0 1px rgba(212,175,55,.25)}
+.ckav{width:42px;height:42px;border-radius:50%;border:1.5px solid var(--gold);display:grid;place-items:center;font-weight:800;color:var(--gold);background:#0c0a06;flex:none}
+.ckp .nm{flex:1;min-width:0}
+.ckp .nm b{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ckp .nm small{color:var(--muted);font-size:12px}
+.cktm{min-width:54px;text-align:center;font-weight:800;font-size:22px;font-variant-numeric:tabular-nums;color:var(--muted)}
+.ckp.act .cktm{color:var(--gold)}
+.cktm.warn{color:var(--bad)!important;animation:pulse .7s infinite alternate}
+.ckhead{display:flex;align-items:center;gap:10px;justify-content:space-between}
+.ckhead .pt{color:var(--muted);font-size:13px;text-align:right}
+</style>
+
+<section id="ck" class="screen">
+  <div id="ckLobby">
+    <button class="back" onclick="showScreen('home')">
+      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg> Назад
+    </button>
+    <div class="pcard">
+      <h2 style="font-size:26px;margin-bottom:6px">Шашки</h2>
+      <p style="color:var(--muted);font-size:14px;line-height:1.5;margin-bottom:16px">1 VS 1 · дошка 8×8 · обов'язкове взяття · <span id="ckSecs">30</span> с на хід</p>
+      <div class="sec">СТАВКА</div>
+      <div class="chips" id="ckStakes"></div>
+      <div class="bsinfo" id="ckInfo"></div>
+    </div>
+    <button class="btn" id="ckFind" onclick="ck.find()">Знайти суперника</button>
+    <p class="hint">Віртуальні монети. Колір розігрується випадково, червоні ходять першими. Якщо вийти з матчу, час ходу продовжує йти.</p>
+  </div>
+
+  <div id="ckWait" style="display:none">
+    <div class="pcard" style="text-align:center;margin-top:30px">
+      <div class="spin"></div>
+      <h2 style="margin-bottom:6px">Шукаємо суперника…</h2>
+      <p style="color:var(--muted)">Ставка: <b style="color:var(--text)" id="ckWStake">0</b></p>
+    </div>
+    <button class="btn ghost" onclick="ck.cancel()">Скасувати пошук</button>
+    <button class="btn ghost close" onclick="ck.menu()">У меню (пошук триває)</button>
+  </div>
+
+  <div id="ckPlay" style="display:none">
+    <div class="ckhead">
+      <button class="chip" onclick="ck.menu()" style="min-height:40px;padding:0 12px">←</button>
+      <div class="pt" id="ckPot"></div>
+    </div>
+    <div class="ckp" id="ckOP">
+      <div class="ckav" id="ckOA">?</div>
+      <div class="nm"><b id="ckON">—</b><small id="ckOS"></small></div>
+      <div class="cktm" id="ckOT">—</div>
+    </div>
+    <div class="ckb" id="ckB"></div>
+    <div class="ckp" id="ckMP">
+      <div class="ckav" id="ckMA">?</div>
+      <div class="nm"><b id="ckMN">—</b><small id="ckMS"></small></div>
+      <div class="cktm" id="ckMT">—</div>
+    </div>
+    <div class="turnbar" id="ckTurn">…</div>
+    <div class="tbar"><i id="ckBar"></i></div>
+  </div>
+</section>
+
+<div id="ckResult" class="modal">
+  <div class="sheet" style="text-align:center">
+    <h2 id="ckResT" style="font-size:30px;margin-bottom:8px"></h2>
+    <p class="sub" id="ckResD"></p>
+    <button class="btn" onclick="ck.again()">Грати ще</button>
+    <button class="btn ghost close" onclick="ck.menu()">До меню</button>
+  </div>
+</div>
+
+<script>
+(function(){
+const S={id:null,s:null,stake:1000,cfg:{stakes:[1000,5000,10000,50000,100000,200000],bp:700,secs:30},
+  cells:[],paths:[],prefix:[],cap:false,key:'',lm:'',flip:false,poll:null,tick:null,
+  busy:false,again:false,deadline:0,total:30,zero:false,sending:false,done:false};
+const rpc=async(fn,args)=>{const{data,error}=await sb.rpc(fn,args);if(error)throw error;return data;};
+const view=(n)=>['Lobby','Wait','Play'].forEach(x=>{$('ck'+x).style.display=x===n?'block':'none'});
+const idx=(d)=>S.flip?63-d:d;
+const own=(v,c)=>c===1?(v===1||v===2):(v===3||v===4);
+const foe=(v,c)=>c===1?(v===3||v===4):(v===1||v===2);
+
+function ckErr(e){
+  const m=(e&&e.message)||'';
+  if(/insufficient_funds/.test(m))return 'Недостатньо коштів. Поповніть баланс';
+  if(/not_your_turn/.test(m))return 'Зараз не ваш хід';
+  if(/bad_move/.test(m))return 'Недопустимий хід';
+  if(/banned/.test(m))return 'Акаунт заблоковано';
+  if(/not_active|forbidden|cannot_cancel/.test(m))return 'Стан матчу змінився';
+  return errText(e);
+}
+
+// ---------- Правила (дзеркало серверних, лише для підказок) ----------
+function jumps(b,pos,k,col,capd){
+  const out=[],r=(pos/8)|0,c=pos%8;
+  for(const dr of [-1,1])for(const dc of [-1,1]){
+    let rr=r+dr,cc=c+dc;
+    if(k)while(rr>=0&&rr<8&&cc>=0&&cc<8&&b[rr*8+cc]===0){rr+=dr;cc+=dc;}
+    if(rr<0||rr>7||cc<0||cc>7)continue;
+    const m=rr*8+cc,v=b[m];
+    if(v===0||!foe(v,col)||capd.indexOf(m)>=0)continue;
+    rr+=dr;cc+=dc;
+    while(rr>=0&&rr<8&&cc>=0&&cc<8&&b[rr*8+cc]===0){
+      out.push({cap:m,land:rr*8+cc});
+      if(!k)break;
+      rr+=dr;cc+=dc;
+    }
+  }
+  return out;
+}
+function captureSeqs(b,pos,col){
+  const w=b.slice(),v=w[pos],k0=(v===2||v===4),out=[];
+  w[pos]=0;
+  (function dfs(p,k,capd,path){
+    const js=jumps(w,p,k,col,capd);
+    if(!js.length){if(path.length>1)out.push(path);return;}
+    const by={};
+    js.forEach(j=>{(by[j.cap]=by[j.cap]||[]).push(j);});
+    Object.keys(by).forEach(key=>{
+      const cap=+key;
+      const info=by[key].map(j=>{
+        const last=col===1?((j.land/8)|0)===0:((j.land/8)|0)===7;
+        const k2=k||last,c2=capd.concat(cap);
+        return {j:j,k2:k2,c2:c2,cont:jumps(w,j.land,k2,col,c2).length>0};
+      });
+      const any=info.some(x=>x.cont);
+      info.forEach(x=>{
+        if(any&&!x.cont&&k)return;
+        dfs(x.j.land,x.k2,x.c2,path.concat(x.j.land));
+      });
+    });
+  })(pos,k0,[],[pos]);
+  return out;
+}
+function simple(b,pos,col){
+  const v=b[pos],k=(v===2||v===4),r=(pos/8)|0,c=pos%8,fw=col===1?-1:1,out=[];
+  for(const dr of [-1,1])for(const dc of [-1,1]){
+    if(!k&&dr!==fw)continue;
+    let rr=r+dr,cc=c+dc;
+    while(rr>=0&&rr<8&&cc>=0&&cc<8&&b[rr*8+cc]===0){
+      out.push([pos,rr*8+cc]);
+      if(!k)break;
+      rr+=dr;cc+=dc;
+    }
+  }
+  return out;
+}
+function legal(b,col){
+  let caps=[],i;
+  for(i=0;i<64;i++)if(b[i]&&own(b[i],col))caps=caps.concat(captureSeqs(b,i,col));
+  if(caps.length)return {paths:caps,cap:true};
+  let mv=[];
+  for(i=0;i<64;i++)if(b[i]&&own(b[i],col))mv=mv.concat(simple(b,i,col));
+  return {paths:mv,cap:false};
+}
+const count=(b,col)=>b.reduce((n,v)=>n+(v&&own(v,col)?1:0),0);
+
+// ---------- Дошка ----------
+function build(){
+  const el=$('ckB');let h='';
+  for(let d=0;d<64;d++){const r=(d/8)|0,c=d%8;h+='<b class="ckc '+(((r+c)%2)?'dk':'lt')+'" data-d="'+d+'"></b>';}
+  el.innerHTML=h;
+  el.onclick=(e)=>{const t=e.target.closest('.ckc');if(t)tap(+t.dataset.d);};
+  S.cells=Array.prototype.slice.call(el.querySelectorAll('.ckc'));
+  S.cells.forEach(x=>{x._h='';x._b=x.className;});
+}
+const cands=()=>S.paths.filter(p=>p.length>S.prefix.length&&S.prefix.every((x,i)=>p[i]===x));
+function paintSel(){
+  const lm=(S.s&&S.s.last_move)||[],tg=new Set(),from=new Set();
+  if(S.prefix.length)cands().forEach(p=>tg.add(p[S.prefix.length]));
+  else S.paths.forEach(p=>from.add(p[0]));
+  S.cells.forEach((el,d)=>{
+    const si=idx(d);let cl=el._b;
+    if(lm.indexOf(si)>=0)cl+=' lm';
+    if(S.prefix.length&&S.prefix[0]===si)cl+=' sel';
+    if(tg.has(si))cl+=' tg';
+    if(from.has(si))cl+=' mv';
+    el.className=cl;
+  });
+}
+function anim(lm){
+  const from=S.cells[idx(lm[0])],to=S.cells[idx(lm[lm.length-1])],pc=to&&to.firstChild;
+  if(!pc||!from)return;
+  const a=from.getBoundingClientRect(),z=to.getBoundingClientRect();
+  pc.style.transition='none';
+  pc.style.transform='translate('+(a.left-z.left)+'px,'+(a.top-z.top)+'px)';
+  pc.getBoundingClientRect();
+  pc.style.transition='transform .28s ease';
+  pc.style.transform='';
+}
+function tap(d){
+  const s=S.s;
+  if(!s||s.status!=='active'||s.turn!==s.me||S.sending)return;
+  const si=idx(d),b=s.board;
+  if(S.prefix.length){
+    if(cands().some(p=>p[S.prefix.length]===si)){
+      S.prefix.push(si);
+      if(S.paths.some(p=>p.length===S.prefix.length&&p.every((x,i)=>x===S.prefix[i])))return send();
+      return paintSel();
+    }
+  }
+  if(b[si]&&own(b[si],s.color)&&S.paths.some(p=>p[0]===si)){S.prefix=[si];paintSel();return;}
+  if(b[si]&&own(b[si],s.color)&&S.cap)toast('Обов\u2019язкове взяття');
+  S.prefix=[];paintSel();
+}
+async function send(){
+  S.sending=true;
+  const path=S.prefix.slice();
+  try{await rpc('ck_play',{p_id:S.id,p_path:path});S.prefix=[];await poll();}
+  catch(e){S.prefix=[];paintSel();toast(ckErr(e));await poll();}
+  S.sending=false;
+}
+
+// ---------- Таймер ----------
+function setDeadline(left,total){S.deadline=Date.now()+left*1000;S.total=total||left||30;S.zero=false;}
+function clock(){
+  const s=S.s;if(!s||s.status!=='active')return;
+  const left=Math.max(0,Math.ceil((S.deadline-Date.now())/1000)),mine=s.turn===s.me;
+  const a=mine?$('ckMT'):$('ckOT'),o=mine?$('ckOT'):$('ckMT');
+  a.textContent=left;o.textContent='—';
+  a.classList.toggle('warn',left<=10);o.classList.remove('warn');
+  $('ckMP').classList.toggle('act',mine);$('ckOP').classList.toggle('act',!mine);
+  $('ckBar').style.width=Math.min(100,left/S.total*100)+'%';
+  if(left===0&&!S.zero){S.zero=true;setTimeout(poll,400);}
+}
+
+// ---------- Стан ----------
+function draw(s){
+  const b=s.board,col=s.color,mine=s.turn===s.me&&s.status==='active';
+  S.flip=col===2;
+  const lmk=(s.last_move||[]).join(',');
+  const key=b.join('')+'|'+s.turn+'|'+lmk+'|'+s.status+'|'+S.flip;
+  if(key!==S.key){
+    S.key=key;S.prefix=[];
+    for(let d=0;d<64;d++){
+      const v=b[idx(d)],el=S.cells[d];
+      const h=v?'<i class="pc '+(v<3?'r':'b')+((v===2||v===4)?' k':'')+'"></i>':'';
+      if(el._h!==h){el.innerHTML=h;el._h=h;}
+    }
+    if(mine){const L=legal(b,col);S.paths=L.paths;S.cap=L.cap;}else{S.paths=[];S.cap=false;}
+    paintSel();
+    if(lmk&&lmk!==S.lm&&s.last_move.length>1)anim(s.last_move);
+    S.lm=lmk;
+  }
+  const nm=(me&&me.username)||'—';
+  $('ckMN').textContent=nm;$('ckMA').textContent=nm.charAt(0).toUpperCase();
+  $('ckON').textContent=s.opponent||'—';$('ckOA').textContent=(s.opponent||'?').charAt(0).toUpperCase();
+  $('ckMS').textContent=(col===1?'Червоні':'Чорні')+' · фігур: '+count(b,col);
+  $('ckOS').textContent=(col===1?'Чорні':'Червоні')+' · фігур: '+count(b,3-col);
+  const pot=s.stake*2;
+  $('ckPot').innerHTML='Банк '+fmt(pot)+'<br>Переможцю '+fmt(pot-Math.floor(pot*S.cfg.bp/10000));
+  const t=$('ckTurn');
+  if(s.status==='active'){
+    t.textContent=mine?(S.cap?'Ваш хід · обов\u2019язкове взяття':'Ваш хід'):'Хід суперника';
+    t.className='turnbar'+(mine?' mine':'');
+  }else{t.textContent='Матч завершено';t.className='turnbar';}
+}
+function apply(s){
+  S.s=s;
+  if(s.status==='waiting'){view('Wait');$('ckWStake').textContent=fmt(s.stake);return;}
+  if(s.status==='active'){view('Play');setDeadline(s.left,s.turn_secs);draw(s);clock();return;}
+  finish(s);
+}
+function finish(s){
+  if(S.done)return;S.done=true;stop();
+  let T,D,col='var(--gold)';
+  if(s.status==='cancelled'){T='Матч скасовано';D='Суперник не знайшовся вчасно. Ставку повернено.';lobby();}
+  else{
+    view('Play');draw(s);
+    $('ckMT').textContent='—';$('ckOT').textContent='—';
+    $('ckMT').classList.remove('warn');$('ckOT').classList.remove('warn');
+    $('ckBar').style.width='0%';
+    $('ckMP').classList.remove('act');$('ckOP').classList.remove('act');
+    if(s.winner===s.me){T='Перемога!';D='Виграш +'+fmt(s.payout)+' (комісія '+fmt(s.fee)+')'+(s.reason==='timeout'?' · суперник не встиг':' · у суперника не лишилось ходів');}
+    else{T='Поразка';col='var(--bad)';D='Ставка '+fmt(s.stake)+' програна'+(s.reason==='timeout'?' · час вийшов':'');}
+  }
+  $('ckResT').textContent=T;$('ckResT').style.color=col;$('ckResD').textContent=D;
+  $('ckResult').classList.add('open');
+  refreshBalance();
+}
+async function poll(){
+  if(!S.id)return;
+  if(S.busy){S.again=true;return;}
+  S.busy=true;
+  try{const s=await rpc('ck_state',{p_id:S.id});if(s.id===S.id)apply(s);}
+  catch(e){if(/forbidden/.test((e&&e.message)||'')){stop();S.id=null;lobby();}}
+  S.busy=false;
+  if(S.again){S.again=false;poll();}
+}
+function stop(){clearInterval(S.poll);clearInterval(S.tick);S.poll=S.tick=null;}
+
+function enter(id){
+  stop();S.id=id;S.s=null;S.key='';S.lm='';S.prefix=[];S.paths=[];S.done=false;S.sending=false;
+  build();
+  $('ckResult').classList.remove('open');
+  S.poll=setInterval(()=>{if(!document.hidden)poll();},1500);
+  S.tick=setInterval(clock,250);
+  view('Wait');poll();refreshBalance();
+}
+async function loadCfg(){
+  try{
+    const{data}=await sb.from('config').select('key,value');
+    (data||[]).forEach(r=>{
+      if(r.key==='ck_stakes')S.cfg.stakes=r.value;
+      if(r.key==='commission_bp')S.cfg.bp=r.value.checkers;
+      if(r.key==='turn_seconds')S.cfg.secs=r.value.checkers;
+    });
+  }catch(e){}
+}
+function lobby(){
+  stop();S.id=null;view('Lobby');
+  $('ckSecs').textContent=S.cfg.secs;
+  if(S.cfg.stakes.indexOf(S.stake)<0)S.stake=S.cfg.stakes[0];
+  $('ckStakes').innerHTML=S.cfg.stakes.map(v=>'<button class="chip'+(v===S.stake?' on':'')+'" onclick="ck.stake('+v+')">'+fmt(v)+'</button>').join('');
+  const pot=S.stake*2,fee=Math.floor(pot*S.cfg.bp/10000);
+  $('ckInfo').innerHTML='Банк матчу: <b>'+fmt(pot)+'</b><br>Переможець отримує: <b>'+fmt(pot-fee)+'</b> <small>(комісія '+(S.cfg.bp/100)+'%)</small>';
+  $('ckFind').textContent=(me&&me.balance>=S.stake)?'Знайти суперника':'Поповнити баланс';
+}
+async function open(){
+  if(!me){showScreen('auth');return;}
+  showScreen('ck');view('Lobby');
+  await loadCfg();await refreshBalance();
+  try{const id=await rpc('ck_my_game');if(id){enter(id);return;}}catch(e){}
+  lobby();
+}
+
+window.ck={
+  open:open,
+  stake:(v)=>{S.stake=v;lobby();},
+  find:async()=>{
+    if(!me||me.balance<S.stake){openTopup();return;}
+    try{const id=await rpc('ck_join',{p_stake:S.stake});enter(id);}catch(e){toast(ckErr(e));}
+  },
+  cancel:async()=>{
+    try{await rpc('ck_cancel',{p_id:S.id});await refreshBalance();lobby();}
+    catch(e){toast(ckErr(e));poll();}
+  },
+  menu:()=>{$('ckResult').classList.remove('open');stop();showScreen('home');refreshBalance();},
+  again:()=>{$('ckResult').classList.remove('open');refreshBalance().then(lobby);}
+};
+games.checkers={open:open};
+document.addEventListener('visibilitychange',()=>{if(!document.hidden&&S.id&&!S.done)poll();});
+})();
+</script>
+
+<!-- ===== ЧАСТИНА 6: КОЛЕСО ФОРТУНИ ===== -->
+<style>
+.fwwrap{position:relative;width:min(78vw,320px);margin:14px auto 18px}
+.fwheel{aspect-ratio:1;transition:transform 4.6s cubic-bezier(.12,.6,.1,1);will-change:transform;
+  filter:drop-shadow(0 6px 18px rgba(0,0,0,.6))}
+.fwheel svg{width:100%;height:100%}
+.fwptr{position:absolute;left:50%;top:-8px;width:0;height:0;transform:translateX(-50%);z-index:2;
+  border-left:12px solid transparent;border-right:12px solid transparent;border-top:22px solid var(--gold2);
+  filter:drop-shadow(0 2px 3px rgba(0,0,0,.7))}
+.fwres{min-height:54px;text-align:center;font-weight:800;font-size:20px;margin:0 0 12px;display:flex;
+  align-items:center;justify-content:center;flex-direction:column}
+.fwres small{font-weight:500;font-size:13px;color:var(--muted);margin-top:3px}
+.fwrow{display:flex;justify-content:space-between;align-items:center;padding:10px 0;
+  border-bottom:1px solid rgba(212,175,55,.12);font-size:14px}
+.fwrow:last-child{border:0}
+.fwrow i{display:inline-block;width:12px;height:12px;border-radius:50%;margin-right:8px;vertical-align:-1px;
+  border:1px solid var(--gold-dim)}
+.fwrow span{color:var(--muted)}
+.fwrtp{font-size:13px;color:var(--muted);line-height:1.7;margin-top:10px}
+.fwrtp b{color:var(--text)}
+.chips.dim{opacity:.6;pointer-events:none}
+</style>
+
+<section id="fw" class="screen">
+  <button class="back" onclick="showScreen('home')">
+    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg> Назад
+  </button>
+  <div class="pcard">
+    <h2 style="font-size:26px;margin-bottom:6px">Колесо фортуни</h2>
+    <p style="color:var(--muted);font-size:14px;line-height:1.5">Оберіть ставку й крутіть. Результат визначає сервер, колесо лише показує його.</p>
+    <div class="fwwrap" id="fwWrap"><i class="fwptr"></i><div class="fwheel" id="fwWheel"><svg id="fwSvg" viewBox="-104 -104 208 208"></svg></div></div>
+    <div class="fwres" id="fwRes"></div>
+    <div class="sec">СТАВКА</div>
+    <div class="chips" id="fwStakes"></div>
+  </div>
+  <button class="btn" id="fwBtn" onclick="fortune.spin()">Крутити</button>
+  <p class="hint">Віртуальні монети · лише для розваги</p>
+
+  <div class="pcard" style="margin-top:14px">
+    <div class="sec">ПРАВИЛА Й ЙМОВІРНОСТІ</div>
+    <div id="fwRules"></div>
+    <div class="fwrtp" id="fwRtp"></div>
+  </div>
+  <div class="pcard">
+    <div class="sec">ВАШІ ОСТАННІ СПІНИ</div>
+    <div id="fwHist"><div class="empty">Завантаження…</div></div>
+  </div>
+</section>
+
+<script>
+(function(){
+const REP=3;
+const S={stake:1000,cfg:{stakes:[1000,5000,10000,50000,100000,200000],w:[{m:0,w:6260},{m:2,w:2500},{m:3,w:940},{m:5,w:300}]},
+  pieces:[],rot:0,spinning:false,ref:null,sig:''};
+const rpc=async(fn,args)=>{const{data,error}=await sb.rpc(fn,args);if(error)throw error;return data;};
+const COL={0:['#14110a','#8d8777'],2:['#3b2f6e','#f3efe6'],3:['#8a6d1a','#fff3c4'],5:['#f5d77a','#1a1405']};
+const colorOf=(m)=>COL[m]||['#2a2418','#f3efe6'];
+const pct=(x)=>x.toFixed(2).replace('.',',')+'%';
+const total=()=>S.cfg.w.reduce((a,x)=>a+x.w,0);
+const newRef=()=>(window.crypto&&crypto.randomUUID)?crypto.randomUUID():('r'+Date.now().toString(36)+Math.random().toString(36).slice(2,12));
+
+function fwErr(e){
+  const m=(e&&e.message)||'';
+  if(/insufficient_funds/.test(m))return 'Недостатньо коштів. Поповніть баланс';
+  if(/bad_stake/.test(m))return 'Така ставка недоступна';
+  if(/banned/.test(m))return 'Акаунт заблоковано';
+  if(/bad_config/.test(m))return 'Гра тимчасово недоступна';
+  return errText(e);
+}
+
+// ---------- Колесо ----------
+const P=(a,r)=>{const t=a*Math.PI/180;return (r*Math.sin(t)).toFixed(2)+' '+(-r*Math.cos(t)).toFixed(2);};
+function layout(){
+  const tot=total();S.pieces=[];let a=0;
+  for(let r=0;r<REP;r++)S.cfg.w.forEach((x,i)=>{
+    const sp=x.w/tot*360/REP;
+    if(sp>0)S.pieces.push({i:i,m:x.m,a0:a,a1:a+sp});
+    a+=sp;
+  });
+}
+function drawWheel(){
+  layout();
+  let s='<circle r="102" fill="#0a0907" stroke="#d4af37" stroke-width="2"/>';
+  S.pieces.forEach(p=>{
+    const c=colorOf(p.m);
+    s+='<path d="M0 0 L'+P(p.a0,98)+' A98 98 0 '+((p.a1-p.a0)>180?1:0)+' 1 '+P(p.a1,98)+' Z" fill="'+c[0]+'" stroke="rgba(212,175,55,.45)" stroke-width=".6"/>';
+    if(p.a1-p.a0>=14){
+      const mid=(p.a0+p.a1)/2,q=P(mid,70).split(' ');
+      s+='<text transform="translate('+q[0]+' '+q[1]+') rotate('+mid+')" text-anchor="middle" dominant-baseline="central" fill="'+c[1]+'" font-size="15" font-weight="800">'+p.m+'×</text>';
+    }
+  });
+  s+='<circle r="14" fill="#0a0907" stroke="#d4af37" stroke-width="2"/>';
+  $('fwSvg').innerHTML=s;
+}
+function landOn(res){
+  let c=S.pieces.filter(p=>p.i===res.sector&&p.m===res.mult);
+  if(!c.length)c=S.pieces.filter(p=>p.m===res.mult);
+  if(!c.length)c=S.pieces;
+  const p=c[Math.floor(Math.random()*c.length)];
+  const sp=p.a1-p.a0,t=p.a0+sp*0.12+Math.random()*sp*0.76;
+  const need=(((-t-S.rot)%360)+360)%360;
+  S.rot+=1800+need;
+  $('fwWheel').style.transform='rotate('+S.rot+'deg)';
+}
+
+// ---------- Інтерфейс ----------
+function render(){
+  const tot=total(),st=S.stake;
+  $('fwStakes').innerHTML=S.cfg.stakes.map(v=>'<button class="chip'+(v===st?' on':'')+'" onclick="fortune.stake('+v+')">'+fmt(v)+'</button>').join('');
+  $('fwStakes').classList.toggle('dim',S.spinning);
+  const b=$('fwBtn');
+  b.disabled=S.spinning;
+  b.textContent=S.spinning?'Крутимо…':((me&&me.balance>=st)?'Крутити':'Поповнити баланс');
+  $('fwRules').innerHTML=S.cfg.w.map(x=>{
+    const c=colorOf(x.m);
+    return '<div class="fwrow"><div><i style="background:'+c[0]+'"></i><b>'+x.m+'×</b></div>'
+      +'<span>'+pct(x.w/tot*100)+' · виплата '+fmt(st*x.m)+'</span></div>';
+  }).join('');
+  const ev=S.cfg.w.reduce((a,x)=>a+x.w*x.m,0)/tot;
+  $('fwRtp').innerHTML='Повернення гравцям: <b>'+pct(ev*100)+'</b> · перевага платформи: <b>'+pct(100-ev*100)+'</b><br>'
+    +'Математичне очікування зі ставки '+fmt(st)+': <b>'+fmt(Math.round(st*ev))+'</b> (середній результат за багато спінів)<br>'
+    +'Комісії немає, перевага закладена в ймовірностях.';
+}
+async function loadHist(){
+  const box=$('fwHist');
+  const{data,error}=await sb.from('fortune_spins').select('stake,mult,payout,created_at').order('id',{ascending:false}).limit(15);
+  if(error){box.innerHTML='<div class="empty">Не вдалося завантажити</div>';return;}
+  if(!data.length){box.innerHTML='<div class="empty">Спінів поки немає</div>';return;}
+  box.innerHTML=data.map(t=>{
+    const net=t.payout-t.stake,pos=net>0;
+    return '<div class="tx"><div><b>'+t.mult+'×</b><small>'+new Date(t.created_at).toLocaleString('uk-UA')+' · ставка '+fmt(t.stake)+'</small></div>'
+      +'<span class="'+(pos?'p':'m')+'">'+(pos?'+':'−')+fmt(Math.abs(net))+'</span></div>';
+  }).join('');
+}
+async function loadCfg(){
+  try{
+    const{data}=await sb.from('config').select('key,value').in('key',['fortune','fortune_stakes']);
+    (data||[]).forEach(r=>{
+      if(r.key==='fortune'&&Array.isArray(r.value)&&r.value.length)S.cfg.w=r.value;
+      if(r.key==='fortune_stakes'&&Array.isArray(r.value)&&r.value.length)S.cfg.stakes=r.value;
+    });
+  }catch(e){}
+  const sig=JSON.stringify(S.cfg.w);
+  if(sig!==S.sig){S.sig=sig;drawWheel();}
+  if(S.cfg.stakes.indexOf(S.stake)<0)S.stake=S.cfg.stakes[0];
+}
+
+// ---------- Спін ----------
+async function spin(){
+  if(S.spinning)return;
+  if(!me||me.balance<S.stake){openTopup();return;}
+  S.spinning=true;render();
+  $('fwRes').innerHTML='';
+  S.ref=S.ref||newRef();
+  let r;
+  try{
+    r=await rpc('fortune_spin',{p_stake:S.stake,p_ref:S.ref});
+    S.ref=null;
+  }catch(e){
+    if(/insufficient_funds|bad_stake|banned|bad_ref|forbidden|bad_config/.test((e&&e.message)||''))S.ref=null;
+    toast(fwErr(e));S.spinning=false;render();refreshBalance();return;
+  }
+  landOn(r);
+  setTimeout(async()=>{
+    const win=r.payout>0;
+    $('fwRes').style.color=win?'var(--gold2)':'var(--muted)';
+    $('fwRes').innerHTML=win?('Виграш +'+fmt(r.payout)+' <small>'+r.mult+'× від ставки '+fmt(r.stake)+'</small>')
+      :('0× <small>Цього разу без виграшу · ставка '+fmt(r.stake)+'</small>');
+    S.spinning=false;
+    await refreshBalance();render();loadHist();
+  },4800);
+}
+async function open(){
+  if(!me){showScreen('auth');return;}
+  showScreen('fw');
+  $('fwRes').innerHTML='';
+  await loadCfg();render();
+  refreshBalance().then(render);
+  loadHist();
+}
+
+window.fortune={
+  open:open,
+  spin:spin,
+  stake:(v)=>{if(S.spinning)return;S.stake=v;render();}
+};
+games.fortune={open:open};
+})();
+</script>
+
+<!-- ===== ЧАСТИНА 7: КОЛЕСО ДЖЕКПОТУ ===== -->
+<style>
+.jpc{position:absolute;inset:0;display:grid;place-items:center;pointer-events:none}
+.jpc div{width:40%;aspect-ratio:1;border-radius:50%;background:rgba(5,5,5,.82);border:1px solid var(--gold-dim);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;
+  font-weight:800;font-size:clamp(11px,3.6vw,15px);line-height:1.2;padding:4px}
+.jpc small{font-size:9px;letter-spacing:1.5px;color:var(--gold);font-weight:600}
+.jpt{text-align:center;font-weight:800;font-size:20px;color:var(--gold);font-variant-numeric:tabular-nums;margin-bottom:8px;min-height:26px}
+.jpt.wait{font-size:14px;font-weight:600;color:var(--muted)}
+.jpmono{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:11px;word-break:break-all;color:var(--text);line-height:1.5;margin-top:4px}
+.jpv{padding:10px 0;border-bottom:1px solid rgba(212,175,55,.12);font-size:13.5px;line-height:1.5}
+.jpv:last-child{border:0}
+.jpv small{display:block;color:var(--muted);font-size:12px}
+.jpv .ok{color:var(--ok);font-weight:700}
+.jpv .no{color:var(--bad);font-weight:700}
+.jpv summary{color:var(--gold);cursor:pointer}
+.sheet.tall{max-height:88vh;overflow-y:auto}
+.jpbtn{width:100%;text-align:left}
+</style>
+
+<section id="jp" class="screen">
+  <button class="back" onclick="jackpot.menu()">
+    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg> Назад
+  </button>
+  <div class="pcard">
+    <h2 style="font-size:26px;margin-bottom:6px">Колесо джекпоту</h2>
+    <p style="color:var(--muted);font-size:14px;line-height:1.5">Спільний розіграш. Шанс = ваша сума / банк. Переможця обирає сервер.</p>
+    <div class="fwwrap">
+      <i class="fwptr"></i>
+      <div class="fwheel" id="jpWheel"><svg id="jpSvg" viewBox="-104 -104 208 208"></svg></div>
+      <div class="jpc"><div><small>БАНК</small><span id="jpPot">0,00</span></div></div>
+    </div>
+    <div class="jpt wait" id="jpTimer">…</div>
+    <div class="tbar"><i id="jpBar" style="width:0%"></i></div>
+    <div class="stats">
+      <div class="stat"><b id="jpCnt">0</b><small>Учасників</small></div>
+      <div class="stat"><b id="jpMine">0,00</b><small>Ваша ставка</small></div>
+      <div class="stat"><b id="jpCh">0%</b><small>Ваш шанс</small></div>
+    </div>
+  </div>
+
+  <div class="pcard">
+    <div class="sec">СТАВКА</div>
+    <div class="chips" id="jpStakes"></div>
+    <button class="btn" id="jpBtn" onclick="jackpot.bet()">Взяти участь</button>
+    <div class="bsinfo" id="jpInfo" style="margin-top:12px"></div>
+  </div>
+
+  <div class="pcard">
+    <div class="sec">УЧАСНИКИ</div>
+    <div id="jpList"><div class="empty">Ставок поки немає</div></div>
+  </div>
+
+  <div class="pcard">
+    <div class="sec">ПРОЗОРІСТЬ (COMMIT-REVEAL)</div>
+    <div class="fwrtp"><b>Хеш цього раунду (commit)</b>
+      <div class="jpmono" id="jpCommit">—</div>
+      <div style="margin-top:8px">Сервер зафіксував прихований ключ до першої ставки. Після розіграшу ключ розкривається, і ви можете перевірити результат самі.</div>
+    </div>
+  </div>
+
+  <div class="pcard">
+    <div class="sec">ІСТОРІЯ ПЕРЕМОЖЦІВ</div>
+    <div id="jpHist"><div class="empty">Завантаження…</div></div>
+    <p class="hint">Торкніться раунду, щоб перевірити розіграш.</p>
+  </div>
+  <p class="hint">Віртуальні монети · лише для розваги</p>
+</section>
+
+<div id="jpResult" class="modal">
+  <div class="sheet" style="text-align:center">
+    <h2 id="jpResT" style="font-size:28px;margin-bottom:8px"></h2>
+    <p class="sub" id="jpResD"></p>
+    <button class="btn" onclick="jackpot.closeRes()">Далі</button>
+    <button class="btn ghost close" onclick="jackpot.verify(jackpot.lastId())">Перевірити розіграш</button>
+  </div>
+</div>
+
+<div id="jpVerify" class="modal" onclick="if(event.target===this)jackpot.closeV()">
+  <div class="sheet tall">
+    <h2>Перевірка розіграшу</h2>
+    <p class="sub">Розрахунок виконується у вашому браузері.</p>
+    <div id="jpVBody"></div>
+    <button class="btn ghost close" onclick="jackpot.closeV()">Закрити</button>
+  </div>
+</div>
+
+<script>
+(function(){
+const S={on:false,stake:1000,st:null,cfg:{stakes:[1000,5000,10000,50000,100000,200000],bp:1000,secs:60,max:200},
+  watch:null,lastCnt:0,lastMine:0,anim:false,hold:false,poll:null,tick:null,busy:false,again:false,
+  deadline:0,zero:false,sending:false,ref:null,refStake:0,rot:0,sig:'',col:new Map(),last:null};
+const rpc=async(fn,args)=>{const{data,error}=await sb.rpc(fn,args);if(error)throw error;return data;};
+const PAL=['#d4af37','#6a56a8','#8a6d1a','#3b2f6e','#f5d77a','#5a4a8c','#b8932b','#8c7bc4'];
+const colOf=(n)=>PAL[(S.col.get(n)||0)%PAL.length];
+const pct=(x)=>x.toFixed(1).replace('.',',')+'%';
+const sleep=(ms)=>new Promise(r=>setTimeout(r,ms));
+const newRef=()=>(window.crypto&&crypto.randomUUID)?crypto.randomUUID():('r'+Date.now().toString(36)+Math.random().toString(36).slice(2,12));
+const P=(a,r)=>{const t=a*Math.PI/180;return (r*Math.sin(t)).toFixed(2)+' '+(-r*Math.cos(t)).toFixed(2);};
+
+function jpErr(e){
+  const m=(e&&e.message)||'';
+  if(/insufficient_funds/.test(m))return 'Недостатньо коштів. Поповніть баланс';
+  if(/bad_stake/.test(m))return 'Така ставка недоступна';
+  if(/round_full/.test(m))return 'Раунд заповнений, зачекайте наступного';
+  if(/banned/.test(m))return 'Акаунт заблоковано';
+  return errText(e);
+}
+function buildCols(bets){S.col=new Map();let k=0;bets.forEach(b=>{if(!S.col.has(b.n))S.col.set(b.n,k++);});}
+function resetRot(){
+  if(!S.rot)return;
+  S.rot=0;const w=$('jpWheel');
+  w.style.transition='none';w.style.transform='rotate(0deg)';w.getBoundingClientRect();w.style.transition='';
+}
+
+// ---------- Колесо ----------
+function drawWheel(bets,pot){
+  let s='<circle r="102" fill="#0a0907" stroke="#d4af37" stroke-width="2"/>';
+  if(!bets.length||!pot){
+    s+='<circle r="98" fill="#0e0c08" stroke="rgba(212,175,55,.3)" stroke-width=".8"/>';
+  }else{
+    const seg=[];
+    bets.forEach(b=>{const l=seg[seg.length-1];if(l&&l.n===b.n)l.a+=b.a;else seg.push({n:b.n,a:b.a});});
+    let a0=0;
+    seg.forEach(g=>{
+      const sp=g.a/pot*360,a1=a0+sp,c=colOf(g.n);
+      if(sp>=359.9)s+='<circle r="98" fill="'+c+'"/>';
+      else s+='<path d="M0 0 L'+P(a0,98)+' A98 98 0 '+(sp>180?1:0)+' 1 '+P(a1,98)+' Z" fill="'+c+'" stroke="#050505" stroke-width=".8"/>';
+      a0=a1;
+    });
+  }
+  s+='<circle r="14" fill="#0a0907" stroke="#d4af37" stroke-width="2"/>';
+  $('jpSvg').innerHTML=s;
+}
+
+// ---------- Інтерфейс ----------
+function renderCtl(){
+  const st=S.st;if(!st)return;
+  const r=st.round,cfg=st.cfg;
+  $('jpStakes').innerHTML=cfg.stakes.map(v=>'<button class="chip'+(v===S.stake?' on':'')+'" onclick="jackpot.stake('+v+')">'+fmt(v)+'</button>').join('');
+  $('jpStakes').classList.toggle('dim',S.sending);
+  const b=$('jpBtn');b.disabled=S.sending||S.anim||S.hold;
+  b.textContent=S.sending?'Відправляємо…':((me&&me.balance>=S.stake)?((r.mine>0?'Збільшити ставку · ':'Взяти участь · ')+fmt(S.stake)):'Поповнити баланс');
+}
+function render(){
+  const st=S.st;if(!st||S.anim||S.hold)return;
+  const r=st.round,cfg=st.cfg;S.cfg=cfg;
+  if(cfg.stakes.indexOf(S.stake)<0)S.stake=cfg.stakes[0];
+  buildCols(r.bets);
+  const sig=r.id+'|'+r.pot+'|'+r.bets.length;
+  if(sig!==S.sig){S.sig=sig;resetRot();drawWheel(r.bets,r.pot);}
+  $('jpPot').textContent=fmt(r.pot);
+  $('jpCnt').textContent=r.count;
+  $('jpMine').textContent=fmt(r.mine);
+  $('jpCh').textContent=(r.pot>0&&r.mine>0)?pct(r.mine/r.pot*100):'0%';
+  $('jpCommit').textContent=r.commit;
+  const agg=[],ix=new Map();
+  r.bets.forEach(b=>{if(!ix.has(b.n)){ix.set(b.n,agg.length);agg.push({n:b.n,a:0});}agg[ix.get(b.n)].a+=b.a;});
+  agg.sort((x,y)=>y.a-x.a);
+  $('jpList').innerHTML=agg.length?agg.map(g=>{
+    const you=me&&g.n===me.username;
+    return '<div class="fwrow"><div><i style="background:'+colOf(g.n)+'"></i><b>'+esc(g.n)+'</b>'+(you?' <span>(ви)</span>':'')+'</div>'
+      +'<span>'+fmt(g.a)+' · '+pct(g.a/r.pot*100)+'</span></div>';
+  }).join(''):'<div class="empty">Ставок поки немає</div>';
+  const win=r.pot-Math.floor(r.pot*cfg.bp/10000);
+  $('jpInfo').innerHTML='Зараз переможцю: <b>'+fmt(win)+'</b> <small>(комісія '+(cfg.bp/100)+'%)</small><br>'
+    +'Таймер ('+cfg.secs+' с) стартує, коли в раунді є щонайменше 2 гравці. Після завершення ставки не приймаються. Максимум '+cfg.max+' ставок у раунді.';
+  renderCtl();
+  clock();
+}
+function clock(){
+  const st=S.st;if(!st||S.anim||S.hold)return;
+  const r=st.round,t=$('jpTimer'),bar=$('jpBar');
+  if(r.left===null||r.left===undefined){
+    t.className='jpt wait';
+    t.textContent=r.count===1?'Очікуємо ще одного гравця…':'Очікуємо гравців (потрібно мінімум 2)…';
+    bar.style.width='0%';return;
+  }
+  const left=Math.max(0,Math.ceil((S.deadline-Date.now())/1000));
+  t.className='jpt';
+  t.textContent='До розіграшу '+Math.floor(left/60)+':'+String(left%60).padStart(2,'0');
+  bar.style.width=Math.min(100,left/S.cfg.secs*100)+'%';
+  if(left===0&&!S.zero){S.zero=true;setTimeout(poll,500);}
+}
+
+// ---------- Стан ----------
+function apply(st){
+  S.st=st;
+  if(S.anim||S.hold)return;
+  const r=st.round;
+  if(S.watch&&r.id!==S.watch&&st.prev&&st.prev.id===S.watch&&S.lastCnt>0){
+    celebrate(S.watch).then(ok=>{if(!ok){S.watch=null;apply(S.st);}});
+    return;
+  }
+  S.watch=r.id;S.lastCnt=r.bets.length;S.lastMine=r.mine;
+  if(r.left!==null&&r.left!==undefined){S.deadline=Date.now()+r.left*1000;if(r.left>0)S.zero=false;}
+  render();
+}
+async function poll(){
+  if(!S.on)return;
+  if(!$('jp').classList.contains('active')){stopT();S.on=false;return;}
+  if(S.busy){S.again=true;return;}
+  S.busy=true;
+  try{apply(await rpc('jp_state'));}catch(e){}
+  S.busy=false;
+  if(S.again){S.again=false;poll();}
+}
+function stopT(){clearInterval(S.poll);clearInterval(S.tick);S.poll=S.tick=null;}
+
+// ---------- Розіграш ----------
+async function celebrate(id){
+  S.anim=true;
+  const t=$('jpTimer');t.className='jpt wait';t.textContent='Розіграш…';$('jpBar').style.width='0%';
+  renderCtl();
+  let d;
+  try{d=await rpc('jp_round',{p_id:id});}catch(e){S.anim=false;return false;}
+  S.last=d;
+  buildCols(d.bets);resetRot();
+  drawWheel(d.bets,d.pot);
+  $('jpPot').textContent=fmt(d.pot);
+  const ang=(d.ticket+0.5)/d.pot*360;
+  const need=(((-ang-S.rot)%360)+360)%360;
+  S.rot+=1800+need;
+  $('jpWheel').style.transform='rotate('+S.rot+'deg)';
+  await sleep(4800);
+  const you=me&&d.winner.n===me.username;
+  $('jpResT').textContent=you?'Перемога!':'Переміг '+d.winner.n;
+  $('jpResT').style.color=you?'var(--gold)':'var(--text)';
+  $('jpResD').textContent=you?('Виграш +'+fmt(d.payout)+' (комісія '+fmt(d.fee)+')')
+    :('Виграш '+fmt(d.payout)+(S.lastMine>0?' · ваша ставка '+fmt(S.lastMine)+' не виграла':''));
+  $('jpResult').classList.add('open');
+  S.anim=false;S.hold=true;
+  refreshBalance().then(renderCtl);loadHist();
+  return true;
+}
+function closeRes(){
+  $('jpResult').classList.remove('open');
+  S.hold=false;S.watch=null;S.sig='';resetRot();
+  if(S.st)apply(S.st);
+}
+
+// ---------- Перевірка ----------
+async function sha(s){
+  const h=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(s));
+  return Array.from(new Uint8Array(h)).map(x=>x.toString(16).padStart(2,'0')).join('');
+}
+async function check(d,str){
+  const c=await sha(d.secret),h=await sha(d.secret+'|'+d.id+'|'+str);
+  const t=Number(BigInt('0x'+h.slice(0,14))%BigInt(d.pot));
+  let cum=0,w=null;
+  for(const b of d.bets){cum+=b.a;if(t<cum){w=b;break;}}
+  return {c:c===d.commit,h:h===d.hash,t:t===d.ticket,w:!!w&&w.p===d.winner.p};
+}
+async function verify(id){
+  if(!id)return;
+  const body=$('jpVBody');
+  $('jpVerify').classList.add('open');
+  body.innerHTML='<div class="spin"></div>';
+  try{
+    const d=(S.last&&S.last.id===id)?S.last:await rpc('jp_round',{p_id:id});
+    const str=d.bets.map(b=>b.id+':'+b.p+':'+b.a).join(',');
+    let k=null;
+    try{k=await check(d,str);}catch(e){}
+    const mk=(v)=>v===undefined||v===null?'<span class="no">перевірка недоступна</span>':(v?'<span class="ok">✓ збігається</span>':'<span class="no">✗ не збігається</span>');
+    body.innerHTML=
+      '<div class="jpv"><b>Раунд #'+d.id+'</b><small>Переможець: '+esc(d.winner.n)+' · банк '+fmt(d.pot)+' · комісія '+fmt(d.fee)+' · виплата '+fmt(d.payout)+'</small></div>'
+      +'<div class="jpv"><b>Commit</b> '+mk(k&&k.c)+'<small>SHA-256 від ключа раунду, опублікований до першої ставки</small><div class="jpmono">'+esc(d.commit)+'</div></div>'
+      +'<div class="jpv"><b>Ключ раунду</b><small>Розкритий після розіграшу</small><div class="jpmono">'+esc(d.secret)+'</div></div>'
+      +'<div class="jpv"><b>Seed hash</b> '+mk(k&&k.h)+'<small>SHA-256( ключ | id раунду | ставки )</small><div class="jpmono">'+esc(d.hash)+'</div></div>'
+      +'<div class="jpv"><b>Квиток</b> '+mk(k&&k.t)+'<small>Перші 14 hex-символів seed hash як число mod банк (в одиницях): квиток '+d.ticket+' із '+d.pot+'</small></div>'
+      +'<div class="jpv"><b>Переможець</b> '+mk(k&&k.w)+'<small>Ставки йдуть за порядком, кожна займає свій діапазон квитків. Переможець це власник діапазону з квитком.</small></div>'
+      +'<div class="jpv"><details><summary>Ставки ('+d.bets.length+'): id ставки : ID гравця : сума в одиницях</summary><div class="jpmono">'+esc(str)+'</div></details></div>';
+  }catch(e){body.innerHTML='<div class="empty">Не вдалося завантажити</div>';}
+}
+
+// ---------- Історія ----------
+async function loadHist(){
+  const box=$('jpHist');
+  try{
+    const h=await rpc('jp_history');
+    box.innerHTML=(h&&h.length)?h.map(x=>
+      '<button class="tx jpbtn" onclick="jackpot.verify('+x.id+')"><div><b>'+esc(x.n)+'</b><small>#'+x.id+' · '
+      +new Date(x.closed_at).toLocaleString('uk-UA')+' · банк '+fmt(x.pot)+' · учасників '+x.c+'</small></div>'
+      +'<span class="p">+'+fmt(x.payout)+'</span></button>').join(''):'<div class="empty">Розіграшів поки немає</div>';
+  }catch(e){box.innerHTML='<div class="empty">Не вдалося завантажити</div>';}
+}
+
+// ---------- Дії ----------
+async function bet(){
+  if(S.sending||!S.st||S.anim||S.hold)return;
+  if(!me||me.balance<S.stake){openTopup();return;}
+  S.sending=true;renderCtl();
+  if(!S.ref||S.refStake!==S.stake){S.ref=newRef();S.refStake=S.stake;}
+  try{
+    const r=await rpc('jp_bet',{p_amount:S.stake,p_ref:S.ref});
+    S.ref=null;
+    if(r&&r.closed)toast('Раунд щойно завершився, ставку не прийнято');
+  }catch(e){
+    if(/insufficient_funds|bad_stake|banned|bad_ref|forbidden|round_full/.test((e&&e.message)||''))S.ref=null;
+    toast(jpErr(e));
+  }
+  S.sending=false;
+  await refreshBalance();await poll();renderCtl();
+}
+async function open(){
+  if(!me){showScreen('auth');return;}
+  showScreen('jp');
+  stopT();
+  S.on=true;S.watch=null;S.st=null;S.sig='';S.hold=false;S.anim=false;S.zero=false;S.busy=false;S.again=false;
+  $('jpResult').classList.remove('open');$('jpVerify').classList.remove('open');
+  await refreshBalance();
+  S.poll=setInterval(()=>{if(!document.hidden)poll();},2000);
+  S.tick=setInterval(clock,250);
+  poll();loadHist();
+}
+function menu(){
+  stopT();S.on=false;S.anim=false;S.hold=false;
+  $('jpResult').classList.remove('open');$('jpVerify').classList.remove('open');
+  showScreen('home');refreshBalance();
+}
+
+window.jackpot={
+  open:open,menu:menu,bet:bet,verify:verify,closeRes:closeRes,
+  closeV:()=>$('jpVerify').classList.remove('open'),
+  lastId:()=>S.last&&S.last.id,
+  stake:(v)=>{if(S.sending)return;S.stake=v;renderCtl();}
+};
+games.jackpot={open:open};
+document.addEventListener('visibilitychange',()=>{if(!document.hidden&&S.on)poll();});
+})();
+</script>
