@@ -1,0 +1,718 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#050505">
+<title>ArenaTS — Admin</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{
+  --bg:#050505;--card:#111010;--card2:#171512;
+  --gold:#d4af37;--gold2:#f5d77a;
+  --line:rgba(212,175,55,.3);
+  --text:#f3efe6;--muted:#8d8777;
+  --ok:#2ecc71;--bad:#e5534b;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+  min-height:100vh;background:var(--bg);color:var(--text);
+  font-family:-apple-system,"Segoe UI",Roboto,sans-serif;
+  padding:20px 14px 40px;
+}
+button,input,textarea{font:inherit}
+button{cursor:pointer}
+.wrap{width:100%;max-width:900px;margin:auto}
+header{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:22px}
+.logo{font-size:25px;font-weight:900;letter-spacing:-.5px}
+.logo i{font-style:normal;color:var(--gold)}
+.tag{font-size:10px;letter-spacing:2px;color:var(--gold);margin-top:3px}
+h2{font-size:19px;margin-bottom:14px}
+h3{font-size:15px;margin-bottom:12px;color:var(--gold)}
+.card{
+  background:linear-gradient(180deg,var(--card2),var(--card));
+  border:1px solid var(--line);border-radius:18px;
+  padding:18px;margin-bottom:14px;
+}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.field{
+  width:100%;height:46px;border:1px solid var(--line);
+  background:#090807;color:var(--text);border-radius:12px;
+  padding:0 13px;margin:5px 0 10px;outline:none;min-width:0;
+}
+.field:focus{border-color:var(--gold)}
+textarea.field{height:75px;padding:12px;resize:vertical}
+label{display:block;font-size:12px;color:var(--muted);margin-top:7px}
+.btn{
+  min-height:44px;padding:0 16px;border:1px solid var(--gold);
+  border-radius:12px;background:linear-gradient(180deg,var(--gold2),var(--gold));
+  color:#1a1405;font-weight:800;
+}
+.btn.ghost{background:transparent;color:var(--text);border-color:var(--line)}
+.btn.danger{background:#29100e;color:#ffb1aa;border-color:#8b3933}
+.btn:disabled{opacity:.45;cursor:wait}
+.actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+.muted{color:var(--muted);font-size:13px;line-height:1.5}
+.status{font-size:13px;min-height:20px;margin:8px 0;color:var(--gold2)}
+.good{color:var(--ok)}.bad{color:var(--bad)}
+.row{
+  display:flex;justify-content:space-between;align-items:center;
+  gap:12px;padding:10px 0;border-bottom:1px solid rgba(212,175,55,.12);
+  font-size:13px;
+}
+.row:last-child{border-bottom:0}
+.row small{display:block;color:var(--muted);margin-top:4px;line-height:1.4}
+.row .amount{font-weight:800;white-space:nowrap}
+.pos{color:var(--ok)}.neg{color:var(--bad)}
+.pill{
+  display:inline-block;border:1px solid var(--line);border-radius:20px;
+  padding:4px 9px;font-size:11px;color:var(--muted);
+}
+.pill.admin{color:var(--gold);border-color:var(--gold)}
+.pill.banned{color:var(--bad);border-color:var(--bad)}
+.pill.active{color:var(--ok);border-color:var(--ok)}
+hr{border:0;border-top:1px solid var(--line);margin:14px 0}
+pre{
+  white-space:pre-wrap;word-break:break-word;color:var(--muted);
+  font-size:11px;line-height:1.5;margin-top:5px;
+}
+[hidden]{display:none!important}
+@media(max-width:620px){
+  .grid{grid-template-columns:1fr}
+  header{align-items:flex-start}
+  .card{padding:15px}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <div>
+    <div class="logo">Arena<i>TS</i></div>
+    <div class="tag">ADMINISTRATION PANEL</div>
+  </div>
+  <button class="btn ghost" id="logoutBtn" onclick="logout()" hidden>Вийти</button>
+</header>
+
+<!-- ВХІД -->
+<section class="card" id="loginBox">
+  <h2>Вхід адміністратора</h2>
+  <p class="muted">Використовуй свій звичайний нік і пароль ArenaTS.</p>
+
+  <label>Нікнейм</label>
+  <input class="field" id="loginNick" maxlength="16"
+    autocomplete="username" autocapitalize="off">
+
+  <label>Пароль</label>
+  <input class="field" id="loginPass" type="password"
+    autocomplete="current-password">
+
+  <button class="btn" id="loginBtn" onclick="login()">Увійти</button>
+  <div class="status" id="loginStatus"></div>
+  <button class="btn ghost" id="deniedLogout" onclick="logout()" hidden>Вийти з акаунта</button>
+</section>
+
+<!-- АДМІНКА -->
+<main id="adminApp" hidden>
+
+  <section class="card">
+    <h2>Панель адміністратора</h2>
+    <p class="muted">Доступ підтверджений сервером.</p>
+    <div class="status good" id="globalStatus"></div>
+  </section>
+
+  <!-- ПОШУК ГРАВЦЯ -->
+  <section class="card">
+    <h2>Пошук гравця</h2>
+    <label>Public ID</label>
+    <div class="grid">
+      <input class="field" id="playerId" type="number" min="100001"
+        step="1" placeholder="Наприклад, 100001">
+      <button class="btn" onclick="findPlayer()">Знайти</button>
+    </div>
+    <div class="status" id="playerStatus"></div>
+    <div id="playerCard" hidden></div>
+  </section>
+
+  <!-- ОСТАННІ ОПЕРАЦІЇ -->
+  <section class="card">
+    <h2>Останні операції</h2>
+    <div class="actions">
+      <button class="btn ghost" onclick="loadTransactions()">Оновити</button>
+    </div>
+    <div id="allTransactions"><p class="muted">Завантаження…</p></div>
+  </section>
+
+  <!-- ЖУРНАЛ АДМІНІВ -->
+  <section class="card">
+    <h2>Журнал admin_actions</h2>
+    <div class="actions">
+      <button class="btn ghost" onclick="loadActions()">Оновити</button>
+    </div>
+    <div id="adminActions"><p class="muted">Завантаження…</p></div>
+  </section>
+
+  <!-- НАЛАШТУВАННЯ -->
+  <section class="card">
+    <h2>Комісії</h2>
+    <p class="muted">Значення у відсотках. На сервері зберігаються базисні пункти.</p>
+
+    <div class="grid">
+      <div>
+        <label>Морський бій (%)</label>
+        <input class="field" id="feeBs" type="number" min="0" max="100" step="0.01">
+      </div>
+      <div>
+        <label>Шашки (%)</label>
+        <input class="field" id="feeCk" type="number" min="0" max="100" step="0.01">
+      </div>
+      <div>
+        <label>Джекпот (%)</label>
+        <input class="field" id="feeJp" type="number" min="0" max="100" step="0.01">
+      </div>
+    </div>
+    <button class="btn" onclick="saveFees()">Зберегти комісії</button>
+  </section>
+
+  <section class="card">
+    <h2>Ставки</h2>
+    <p class="muted">Вводь суми у гривнях через кому. Доступні номінали: 10, 50, 100, 500, 1000, 2000.</p>
+
+    <label>Морський бій</label>
+    <input class="field" id="stakesBs" placeholder="10, 50, 100, 500, 1000, 2000">
+    <button class="btn ghost" onclick="saveStakes('bs_stakes','stakesBs')">Зберегти ставки</button>
+
+    <hr>
+    <label>Шашки</label>
+    <input class="field" id="stakesCk" placeholder="10, 50, 100, 500, 1000, 2000">
+    <button class="btn ghost" onclick="saveStakes('ck_stakes','stakesCk')">Зберегти ставки</button>
+
+    <hr>
+    <label>Колесо фортуни</label>
+    <input class="field" id="stakesFw" placeholder="10, 50, 100, 500, 1000, 2000">
+    <button class="btn ghost" onclick="saveStakes('fortune_stakes','stakesFw')">Зберегти ставки</button>
+
+    <hr>
+    <label>Колесо джекпоту</label>
+    <input class="field" id="stakesJp" placeholder="10, 50, 100, 500, 1000, 2000">
+    <button class="btn ghost" onclick="saveStakes('jp_stakes','stakesJp')">Зберегти ставки</button>
+  </section>
+
+  <section class="card">
+    <h2>Ймовірності колеса фортуни</h2>
+    <p class="muted">Вкажи ймовірність кожного сектора у відсотках. Сума має дорівнювати 100%.</p>
+
+    <div class="grid">
+      <div>
+        <label>0× (%)</label>
+        <input class="field fwProb" id="prob0" type="number" min="0" max="100" step="0.01">
+      </div>
+      <div>
+        <label>2× (%)</label>
+        <input class="field fwProb" id="prob2" type="number" min="0" max="100" step="0.01">
+      </div>
+      <div>
+        <label>3× (%)</label>
+        <input class="field fwProb" id="prob3" type="number" min="0" max="100" step="0.01">
+      </div>
+      <div>
+        <label>5× (%)</label>
+        <input class="field fwProb" id="prob5" type="number" min="0" max="100" step="0.01">
+      </div>
+    </div>
+
+    <div class="card" style="margin:8px 0">
+      <div class="row"><span>Сума ймовірностей</span><b id="probSum">—</b></div>
+      <div class="row"><span>Повернення гравцям (RTP)</span><b id="probRtp">—</b></div>
+      <div class="row"><span>Перевага платформи</span><b id="probEdge">—</b></div>
+      <div class="row"><span>Очікувана виплата зі ставки 100 грн</span><b id="probEv">—</b></div>
+    </div>
+
+    <button class="btn" onclick="saveFortune()">Зберегти ймовірності</button>
+    <div class="status" id="fortuneStatus"></div>
+  </section>
+
+</main>
+</div>
+
+<script>
+const SUPABASE_URL='https://zijuekgxcbfnlofbbtmw.supabase.co';
+const SUPABASE_KEY='sb_publishable_Y0UEJuP56sPzRw8Z0bwmbg_cTc6FLRF';
+const sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+
+const $=id=>document.getElementById(id);
+const ALLOWED=[1000,5000,10000,50000,100000,200000];
+
+const DEFAULTS={
+  commission_bp:{battleship:700,checkers:700,jackpot:1000},
+  bs_stakes:ALLOWED.slice(),
+  ck_stakes:ALLOWED.slice(),
+  fortune_stakes:ALLOWED.slice(),
+  jp_stakes:ALLOWED.slice(),
+  fortune:[
+    {m:0,w:6260},
+    {m:2,w:2500},
+    {m:3,w:940},
+    {m:5,w:300}
+  ]
+};
+
+let CFG={};
+let currentPlayer=null;
+
+function fmt(units){
+  return (Number(units||0)/100).toLocaleString('uk-UA',{
+    minimumFractionDigits:2,maximumFractionDigits:2
+  }).replace(/\u00a0/g,' ');
+}
+function esc(s){
+  return String(s??'').replace(/[&<>"']/g,c=>({
+    '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+  }[c]));
+}
+function date(v){
+  return v?new Date(v).toLocaleString('uk-UA'):'—';
+}
+function message(id,msg,good=false){
+  $(id).textContent=msg;
+  $(id).className='status '+(good?'good':'bad');
+}
+async function rpc(name,args={}){
+  const {data,error}=await sb.rpc(name,args);
+  if(error)throw error;
+  return data;
+}
+function errorText(e){
+  const m=e?.message||String(e);
+  if(/forbidden/i.test(m))return 'Немає прав адміністратора';
+  if(/insufficient_funds/i.test(m))return 'Недостатньо коштів';
+  if(/bad_config|config_key_not_allowed/i.test(m))return 'Некоректні налаштування';
+  return m;
+}
+
+// ---------- АВТОРИЗАЦІЯ ----------
+
+async function login(){
+  const nick=$('loginNick').value.trim();
+  const pass=$('loginPass').value;
+  if(!/^[A-Za-z0-9_]{3,16}$/.test(nick)){
+    message('loginStatus','Некоректний нікнейм');
+    return;
+  }
+  if(pass.length<6){
+    message('loginStatus','Пароль має містити мінімум 6 символів');
+    return;
+  }
+
+  $('loginBtn').disabled=true;
+  try{
+    const {error}=await sb.auth.signInWithPassword({
+      email:nick.toLowerCase()+'@arenats.game',
+      password:pass
+    });
+    if(error)throw error;
+    $('loginPass').value='';
+    await enterAdmin();
+  }catch(e){
+    message('loginStatus',errorText(e));
+  }
+  $('loginBtn').disabled=false;
+}
+
+async function enterAdmin(){
+  try{
+    // Це серверна перевірка is_admin().
+    CFG=await rpc('admin_get_config');
+    if(!CFG||typeof CFG!=='object')throw new Error('forbidden');
+
+    $('loginBox').hidden=true;
+    $('adminApp').hidden=false;
+    $('logoutBtn').hidden=false;
+    message('globalStatus','Адміністративний доступ підтверджено',true);
+
+    renderConfig();
+    await Promise.all([loadTransactions(),loadActions()]);
+  }catch(e){
+    $('adminApp').hidden=true;
+    $('loginBox').hidden=false;
+    $('logoutBtn').hidden=true;
+    $('deniedLogout').hidden=false;
+    message('loginStatus',errorText(e));
+  }
+}
+
+async function logout(){
+  await sb.auth.signOut();
+  CFG={};
+  currentPlayer=null;
+  $('adminApp').hidden=true;
+  $('loginBox').hidden=false;
+  $('logoutBtn').hidden=true;
+  $('deniedLogout').hidden=true;
+  $('loginPass').value='';
+  message('loginStatus','Ви вийшли з акаунта',true);
+}
+
+async function gate(){
+  const {data:{session}}=await sb.auth.getSession();
+  if(session)await enterAdmin();
+}
+$('loginPass').addEventListener('keydown',e=>{
+  if(e.key==='Enter')login();
+});
+$('loginNick').addEventListener('keydown',e=>{
+  if(e.key==='Enter')login();
+});
+
+// ---------- ПОШУК ГРАВЦЯ ----------
+
+async function findPlayer(){
+  const id=Number($('playerId').value);
+  if(!Number.isSafeInteger(id)||id<100001){
+    message('playerStatus','Введи коректний Public ID');
+    return;
+  }
+
+  $('playerCard').hidden=true;
+  message('playerStatus','Шукаємо гравця…',true);
+
+  try{
+    const data=await rpc('admin_player_card',{p_public_id:id});
+    if(!data||!data.profile){
+      currentPlayer=null;
+      message('playerStatus','Гравця не знайдено');
+      return;
+    }
+    currentPlayer=data.profile;
+    renderPlayer(data);
+    message('playerStatus','Гравця знайдено',true);
+  }catch(e){
+    message('playerStatus',errorText(e));
+  }
+}
+
+function renderPlayer(data){
+  const p=data.profile;
+  const banned=p.is_banned;
+  const tx=data.transactions||[];
+
+  $('playerCard').innerHTML=`
+    <hr>
+    <div class="row">
+      <div><b>${esc(p.username)}</b><small>Public ID: ${p.public_id}</small></div>
+      <span class="pill ${p.is_admin?'admin':''}">${p.is_admin?'Адміністратор':'Гравець'}</span>
+    </div>
+    <div class="row">
+      <span>Баланс</span><b>${fmt(p.balance)} грн</b>
+    </div>
+    <div class="row">
+      <span>Статус</span>
+      <span class="pill ${banned?'banned':'active'}">${banned?'Заблокований':'Активний'}</span>
+    </div>
+    <div class="row"><span>Реєстрація</span><b>${date(p.created_at)}</b></div>
+    <div class="row"><span>Перемоги / поразки</span><b>${p.wins} / ${p.losses}</b></div>
+    ${banned?`<div class="row"><span>Причина бану</span><b>${esc(p.ban_reason||'—')}</b></div>`:''}
+
+    <hr>
+    <h3>Зміна балансу</h3>
+    <label>Сума у гривнях</label>
+    <input class="field" id="adjustAmount" type="number" min="0.01" step="0.01" placeholder="Наприклад, 100">
+    <label>Примітка</label>
+    <input class="field" id="adjustNote" maxlength="200" placeholder="Причина операції">
+    <div class="actions">
+      <button class="btn" onclick="adjustBalance(1)">Додати</button>
+      <button class="btn danger" onclick="adjustBalance(-1)">Зняти</button>
+    </div>
+
+    <hr>
+    <h3>Керування акаунтом</h3>
+    <label>Причина бану / розбану</label>
+    <textarea class="field" id="banReason" maxlength="300"
+      placeholder="Причина (для бану обов’язково)">${esc(p.ban_reason||'')}</textarea>
+    <div class="actions">
+      <button class="btn ${banned?'':'danger'}" onclick="toggleBan(${banned?'false':'true'})">
+        ${banned?'Розбанити':'Забанити'}
+      </button>
+      <button class="btn ghost" onclick="kickPlayer()">Кікнути</button>
+    </div>
+
+    <hr>
+    <h3>Останні операції гравця</h3>
+    ${tx.length?tx.map(t=>`
+      <div class="row">
+        <div>
+          <b>${esc(t.kind)}</b>
+          <small>${date(t.created_at)}${t.note?' · '+esc(t.note):''}</small>
+          <small>Баланс після: ${fmt(t.balance_after)}</small>
+        </div>
+        <span class="amount ${Number(t.amount)>=0?'pos':'neg'}">
+          ${Number(t.amount)>=0?'+':'−'}${fmt(Math.abs(t.amount))}
+        </span>
+      </div>
+    `).join(''):'<p class="muted">Операцій немає</p>'}
+  `;
+  $('playerCard').hidden=false;
+}
+
+// ---------- БАЛАНС ----------
+
+async function adjustBalance(direction){
+  if(!currentPlayer)return;
+
+  const amount=Number($('adjustAmount').value);
+  const note=$('adjustNote').value.trim();
+
+  if(!Number.isFinite(amount)||amount<=0){
+    alert('Введи суму більше нуля');
+    return;
+  }
+  if(!note){
+    alert('Вкажи примітку до операції');
+    return;
+  }
+
+  const units=Math.round(amount*100)*direction;
+  if(!Number.isSafeInteger(units)||units===0){
+    alert('Некоректна сума');
+    return;
+  }
+
+  try{
+    await rpc('admin_adjust_balance',{
+      p_public_id:currentPlayer.public_id,
+      p_amount:units,
+      p_note:note
+    });
+    $('adjustAmount').value='';
+    $('adjustNote').value='';
+    await findPlayer();
+    await loadTransactions();
+    await loadActions();
+    message('playerStatus','Баланс успішно змінено',true);
+  }catch(e){
+    message('playerStatus',errorText(e));
+  }
+}
+
+// ---------- БАН / РОЗБАН ----------
+
+async function toggleBan(banned){
+  if(!currentPlayer)return;
+  const reason=$('banReason').value.trim();
+
+  if(banned&&!reason){
+    alert('Для бану вкажи причину');
+    return;
+  }
+
+  if(!confirm(banned?'Заблокувати цього гравця?':'Розблокувати цього гравця?'))return;
+
+  try{
+    await rpc('admin_set_ban',{
+      p_public_id:currentPlayer.public_id,
+      p_banned:banned,
+      p_reason:reason
+    });
+    await findPlayer();
+    await loadActions();
+    message('playerStatus',banned?'Гравця заблоковано':'Гравця розблоковано',true);
+  }catch(e){
+    message('playerStatus',errorText(e));
+  }
+}
+
+// ---------- КІК ----------
+
+async function kickPlayer(){
+  if(!currentPlayer)return;
+  if(!confirm('Кікнути гравця? Йому доведеться увійти знову.'))return;
+
+  try{
+    await rpc('admin_kick',{
+      p_public_id:currentPlayer.public_id
+    });
+    await findPlayer();
+    await loadActions();
+    message('playerStatus','Гравця кікнуто',true);
+  }catch(e){
+    message('playerStatus',errorText(e));
+  }
+}
+
+// ---------- ІСТОРІЯ ОПЕРАЦІЙ ----------
+
+async function loadTransactions(){
+  const box=$('allTransactions');
+  box.innerHTML='<p class="muted">Завантаження…</p>';
+
+  try{
+    const data=await rpc('admin_recent_transactions',{p_limit:50});
+    box.innerHTML=data.length?data.map(t=>`
+      <div class="row">
+        <div>
+          <b>${esc(t.username||'Невідомий')} · ID ${t.public_id??'—'}</b>
+          <small>${esc(t.kind)} · ${date(t.created_at)}</small>
+          <small>${esc(t.note||'')}</small>
+        </div>
+        <span class="amount ${Number(t.amount)>=0?'pos':'neg'}">
+          ${Number(t.amount)>=0?'+':'−'}${fmt(Math.abs(t.amount))}
+        </span>
+      </div>
+    `).join(''):'<p class="muted">Операцій немає</p>';
+  }catch(e){
+    box.innerHTML='<p class="bad">'+esc(errorText(e))+'</p>';
+  }
+}
+
+// ---------- ЖУРНАЛ АДМІНІВ ----------
+
+async function loadActions(){
+  const box=$('adminActions');
+  box.innerHTML='<p class="muted">Завантаження…</p>';
+
+  try{
+    const data=await rpc('admin_recent_actions',{p_limit:50});
+    box.innerHTML=data.length?data.map(a=>`
+      <div class="row">
+        <div>
+          <b>${esc(a.action)}</b>
+          <small>Адмін: ${esc(a.admin_username||'—')} · Гравець: ${esc(a.target_username||'—')}</small>
+          <small>${date(a.created_at)}</small>
+          ${a.details?'<pre>'+esc(JSON.stringify(a.details,null,2))+'</pre>':''}
+        </div>
+      </div>
+    `).join(''):'<p class="muted">Записів немає</p>';
+  }catch(e){
+    box.innerHTML='<p class="bad">'+esc(errorText(e))+'</p>';
+  }
+}
+
+// ---------- КОНФІГУРАЦІЯ ----------
+
+function configValue(key){
+  return CFG[key]??DEFAULTS[key];
+}
+function renderConfig(){
+  const c=configValue('commission_bp');
+  $('feeBs').value=(c.battleship/100).toFixed(2);
+  $('feeCk').value=(c.checkers/100).toFixed(2);
+  $('feeJp').value=(c.jackpot/100).toFixed(2);
+
+  $('stakesBs').value=configValue('bs_stakes').map(x=>x/100).join(', ');
+  $('stakesCk').value=configValue('ck_stakes').map(x=>x/100).join(', ');
+  $('stakesFw').value=configValue('fortune_stakes').map(x=>x/100).join(', ');
+  $('stakesJp').value=configValue('jp_stakes').map(x=>x/100).join(', ');
+
+  const f=configValue('fortune');
+  f.forEach(x=>{
+    $('prob'+x.m).value=(x.w/100).toFixed(2);
+  });
+  calcFortune();
+}
+
+async function saveConfig(key,value){
+  try{
+    await rpc('admin_set_config',{p_key:key,p_value:value});
+    CFG[key]=value;
+    message('globalStatus','Налаштування збережено',true);
+    return true;
+  }catch(e){
+    message('globalStatus',errorText(e));
+    return false;
+  }
+}
+
+// Комісії: відсотки переводимо в базисні пункти
+async function saveFees(){
+  const vals={
+    battleship:Number($('feeBs').value),
+    checkers:Number($('feeCk').value),
+    jackpot:Number($('feeJp').value)
+  };
+  if(Object.values(vals).some(x=>!Number.isFinite(x)||x<0||x>100)){
+    message('globalStatus','Комісія має бути від 0 до 100%');
+    return;
+  }
+  const bp={
+    battleship:Math.round(vals.battleship*100),
+    checkers:Math.round(vals.checkers*100),
+    jackpot:Math.round(vals.jackpot*100)
+  };
+  await saveConfig('commission_bp',bp);
+}
+
+// Ставки
+async function saveStakes(key,inputId){
+  const raw=$(inputId).value.split(',').map(x=>x.trim()).filter(Boolean);
+  const nums=raw.map(Number);
+
+  if(!nums.length||nums.some(x=>!Number.isFinite(x))){
+    message('globalStatus','Введи список ставок');
+    return;
+  }
+
+  const units=nums.map(x=>Math.round(x*100));
+  if(units.some(x=>!ALLOWED.includes(x))||new Set(units).size!==units.length){
+    message('globalStatus','Дозволені лише 10, 50, 100, 500, 1000, 2000 грн без повторів');
+    return;
+  }
+
+  if(await saveConfig(key,units)){
+    $(inputId).value=nums.join(', ');
+  }
+}
+
+// Ймовірності та математичне очікування
+function fortuneValues(){
+  return [0,2,3,5].map(m=>({
+    m,
+    w:Math.round(Number($('prob'+m).value)*100)
+  }));
+}
+function calcFortune(){
+  const vals=fortuneValues();
+  if(vals.some(x=>!Number.isFinite(x.w)||x.w<0)){
+    $('probSum').textContent='—';
+    $('probRtp').textContent='—';
+    $('probEdge').textContent='—';
+    $('probEv').textContent='—';
+    return;
+  }
+
+  const sum=vals.reduce((a,x)=>a+x.w,0);
+  const ev=vals.reduce((a,x)=>a+x.m*x.w,0)/10000;
+  const rtp=ev*100;
+
+  $('probSum').textContent=(sum/100).toFixed(2)+'%';
+  $('probRtp').textContent=rtp.toFixed(2)+'%';
+  $('probEdge').textContent=(100-rtp).toFixed(2)+'%';
+  $('probEv').textContent=(100*ev).toFixed(2)+' грн';
+}
+document.querySelectorAll('.fwProb').forEach(el=>{
+  el.addEventListener('input',calcFortune);
+});
+
+async function saveFortune(){
+  const vals=fortuneValues();
+  if(vals.some(x=>!Number.isFinite(x.w)||x.w<0||x.w>10000)){
+    message('fortuneStatus','Некоректна ймовірність');
+    return;
+  }
+
+  const sum=vals.reduce((a,x)=>a+x.w,0);
+  if(sum!==10000){
+    message('fortuneStatus','Сума ймовірностей має дорівнювати 100%');
+    return;
+  }
+
+  const ok=await saveConfig('fortune',vals);
+  if(ok)message('fortuneStatus','Ймовірності збережено',true);
+}
+
+// ---------- СТАРТ ----------
+
+gate();
+</script>
+</body>
+</html>
